@@ -6,17 +6,62 @@ from dotenv import load_dotenv
 import pandas as pd
 
 load_dotenv()
+
+# Define constants
 API_KEY = os.environ["OBA_API_KEY"]
 BASE_URL = "https://api.pugetsound.onebusaway.org/api/where"
 PROJECT_ROOT = Path(__file__).resolve().parent
+
+## Transit related information (OneBusAway API)
 AGENCIES_FILE = PROJECT_ROOT / "data" / "reference" / "agencies.json"
 AGENCY_ROUTE_FILE = PROJECT_ROOT / "data" /"reference" / "agency_route.json"
+
+## Permitting related information (Seattle Department of Construction and Inspections)
 PERMITS_URL = (
     "https://cos-data.seattle.gov/api/v3/views/"
     "76t5-zqzr/export.csv?accessType=DOWNLOAD"
 )
-
 PERMITS_FILE = Path("data/raw/building_permits.csv")
+PERMITS_ANALYSIS_FILE = Path("data/processed/building_permits_selected_columns.csv")
+
+PERMIT_COLUMNS = [
+    # Identifiers and project relationships
+    "PermitNum",
+    "ParentPermitNum",
+    "RelatedMup",
+    "Development Site",
+
+    # Permit classification
+    "PermitClass",
+    "PermitClassMapped",
+    "PermitTypeMapped",
+    "PermitTypeDesc",
+    "Description",
+
+    # Development outcomes
+    "HousingUnits",
+    "HousingUnitsAdded",
+    "HousingUnitsRemoved",
+    "HousingCategory",
+    "DwellingUnitType",
+    "EstProjectCost",
+
+    # Status and timing
+    "AppliedDate",
+    "IssuedDate",
+    "CompletedDate",
+    "ExpiresDate",
+    "StatusCurrent",
+
+    # Geography
+    "OriginalAddress1",
+    "OriginalZip",
+    "Latitude",
+    "Longitude",
+    "Zoning",
+]
+
+# Functions
 
 def download_permits(refresh = False): 
     if PERMITS_FILE.exists() and not refresh:
@@ -30,6 +75,28 @@ def download_permits(refresh = False):
     PERMITS_FILE.write_bytes(response.content)
 
     return PERMITS_FILE
+
+def fetch_and_save_permits(refresh = False): 
+    if PERMITS_ANALYSIS_FILE.exists() and not refresh:
+        return PERMITS_ANALYSIS_FILE
+    
+    PERMITS_ANALYSIS_FILE.parent.mkdir(parents=True, exist_ok=True)
+
+    permit_path = download_permits(refresh = refresh)
+    permits = pd.read_csv(permit_path, low_memory=False)
+
+    #corridor_buffers = station_buffers.geometry.union_all()
+
+    missing_columns = [col for col in PERMIT_COLUMNS if col not in permits.columns]
+
+    print(f"Missing columns: {missing_columns}")
+
+    selected_columns = [col for col in PERMIT_COLUMNS if col in permits.columns]
+    permits_analysis = permits[selected_columns].copy()
+
+    permits_analysis.to_csv("data/processed/building_permits_selected_columns.csv", index=False)
+
+    return PERMITS_ANALYSIS_FILE
 
 def _get_oba(path, **parameters):
     parameters["key"] = API_KEY
@@ -141,12 +208,15 @@ else:
 for route in routes:
     print(route["name"], route["long_name"])
 
-permit_path = download_permits()
-permits = pd.read_csv(permit_path, low_memory=False)
 
-print(permits.columns.to_list)
-print(permits.shape)
+permits = fetch_and_save_permits(refresh = False)
 
+# Visualize permits issued over time in line catchment area
+## should it be line generalizable?
+permits_df = pd.read_csv(permits)
+permits_df["AppliedDate"] = pd.to_datetime(permits_df["AppliedDate"], errors="coerce")
+permits_df["IssuedDate"] = pd.to_datetime(permits_df["IssuedDate"], errors="coerce")
+permits_df["CompletedDate"] = pd.to_datetime(permits_df["CompletedDate"], errors="coerce")
+permits_df["ExpiresDate"] = pd.to_datetime(permits_df["ExpiresDate"], errors="coerce") 
 
-
-    
+column_profile = permits_df.describe(include="all").transpose()
