@@ -1,0 +1,2879 @@
+[
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Auburn Station - White River Junction",
+    "null_safe_name": "184",
+    "name": "184"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Green River College - Kent - Des Moines - Burien",
+    "null_safe_name": "165",
+    "name": "165"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Burien - Kent Station",
+    "null_safe_name": "161",
+    "name": "161"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Lake Meridian P&R - Downtown Seattle",
+    "null_safe_name": "162",
+    "name": "162"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Kenmore P&R - 12 Av/E Terrace St",
+    "null_safe_name": "322",
+    "name": "322"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Pacific - Algona - Auburn Station",
+    "null_safe_name": "917",
+    "name": "917"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Renton TC - Kent Station - Auburn Station",
+    "null_safe_name": "160",
+    "name": "160"
+  },
+  {
+    "route_id": "1",
+    "long_name": "A-Line Rapid Ride",
+    "description": "Federal Way - SeaTac - Tukwila Intl Blvd Sta",
+    "null_safe_name": "A Line",
+    "name": "A Line"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Kenmore - Totem Lake TC - Overlake Park & Ride",
+    "null_safe_name": "225",
+    "name": "225"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Woodinville - Brickyard - Juanita - Kirkland TC",
+    "null_safe_name": "231",
+    "name": "231"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "UW/Cascadia Coll - Totem Lake TC - Kirkland TC",
+    "null_safe_name": "239",
+    "name": "239"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "North Creek - Bothell - Juanita - Kirkland TC",
+    "null_safe_name": "230",
+    "name": "230"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Avondale -  Redmond TC - Kirkland TC - Bellevue TC",
+    "null_safe_name": "250",
+    "name": "250"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Woodinville - Downtown Seattle",
+    "null_safe_name": "256",
+    "name": "256"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Redmond Technology - Education Hill - Cottage Lake",
+    "null_safe_name": "222",
+    "name": "222"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "UW/Cascadia College - University District",
+    "null_safe_name": "372",
+    "name": "372"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Spring District Station - South Bellevue Station",
+    "null_safe_name": "249",
+    "name": "249"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Water Taxi: West Seattle - Downtown Seattle",
+    "null_safe_name": "973",
+    "name": "973"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "So Mercer Island - First Hill - Downtown Seattle",
+    "null_safe_name": "630",
+    "name": "630"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Issaquah Highlands - South Bellevue Station",
+    "null_safe_name": "203",
+    "name": "203"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Water Taxi: Vashon Island - Downtown Seattle",
+    "null_safe_name": "975",
+    "name": "975"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Issaquah Highlands - Downtown Seattle",
+    "null_safe_name": "218",
+    "name": "218"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Gregory Heights - Burien Transit Center",
+    "null_safe_name": "631",
+    "name": "631"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Federal Way - Twin Lakes",
+    "null_safe_name": "187",
+    "name": "187"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "East Queen Anne - Downtown Seattle - Judkins Park",
+    "null_safe_name": "4",
+    "name": "4"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Othello Station - Beacon Hill - Downtown Seattle",
+    "null_safe_name": "36",
+    "name": "36"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Eastgate P&R - Downtown Redmond Station",
+    "null_safe_name": "223",
+    "name": "223"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Univ Dist-Montlake-Capitol Hill-Downtown Seattle",
+    "null_safe_name": "43",
+    "name": "43"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Kirkland - Lakeside School",
+    "null_safe_name": "986",
+    "name": "986"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Twin Lakes - Mirror Lake - Federal Way",
+    "null_safe_name": "902",
+    "name": "902"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Ballard - Montlake",
+    "null_safe_name": "44",
+    "name": "44"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Westwood Village - Rainier Beach - Lakeside School",
+    "null_safe_name": "987",
+    "name": "987"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Bellevue TC - Eastgate P&R",
+    "null_safe_name": "220",
+    "name": "220"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Eastgate P&R - Downtown Seattle",
+    "null_safe_name": "212",
+    "name": "212"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Loyal Heights - University District",
+    "null_safe_name": "45",
+    "name": "45"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Madrona - Lakeside School",
+    "null_safe_name": "988",
+    "name": "988"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Mount Baker TC - Issaquah Alps",
+    "null_safe_name": "Trailhead Direct Issaquah Alps",
+    "name": "Trailhead Direct Issaquah Alps"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Eastgate - Lakeside School",
+    "null_safe_name": "989",
+    "name": "989"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "University District - Bellevue",
+    "null_safe_name": "270",
+    "name": "270"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Mercer Island - North Bend",
+    "null_safe_name": "215",
+    "name": "215"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Mt Baker - University District",
+    "null_safe_name": "48",
+    "name": "48"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Des Moines Marina District - Angle Lake Station",
+    "null_safe_name": "635",
+    "name": "635"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "University District - Shoreline South Station",
+    "null_safe_name": "72",
+    "name": "72"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Shoreline CC - Greenwood - Seattle",
+    "null_safe_name": "5",
+    "name": "5"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Bear Creek P&R - Lakeside School",
+    "null_safe_name": "982",
+    "name": "982"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Seattle Center - Downtown Seattle - Pioneer Square",
+    "null_safe_name": "Waterfront Shuttle",
+    "name": "Waterfront Shuttle"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Arbor Heights-Westwood Village-Downtown Seattle",
+    "null_safe_name": "21",
+    "name": "21"
+  },
+  {
+    "route_id": "1",
+    "long_name": "F-Line Rapid Ride",
+    "description": "Burien TC - Tukwila Intl Blvd Sta - Renton Landing",
+    "null_safe_name": "F Line",
+    "name": "F Line"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Greenlake - University District",
+    "null_safe_name": "79",
+    "name": "79"
+  },
+  {
+    "route_id": "1",
+    "long_name": "E-Line Rapid Ride",
+    "description": "Aurora Village Transit Center - Downtown Seattle",
+    "null_safe_name": "E Line",
+    "name": "E Line"
+  },
+  {
+    "route_id": "1",
+    "long_name": "H-Line Rapid Ride",
+    "description": "Burien TC - Westwood Village - Downtown Seattle",
+    "null_safe_name": "H Line",
+    "name": "H Line"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Shoreline South/148th Station - Northgate Station",
+    "null_safe_name": "345",
+    "name": "345"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Aurora Village TC - Shoreline South/148th Station",
+    "null_safe_name": "346",
+    "name": "346"
+  },
+  {
+    "route_id": "1",
+    "long_name": "G-Line Rapid Ride",
+    "description": "Madison Valley - Downtown Seattle",
+    "null_safe_name": "G Line",
+    "name": "G Line"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Northgate Station - Shoreline Link Stations",
+    "null_safe_name": "365",
+    "name": "365"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Richmond Beach - Shoreline North - Northgate",
+    "null_safe_name": "348",
+    "name": "348"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Univ District - Broadway - Downtown Seattle",
+    "null_safe_name": "49",
+    "name": "49"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Lake City - Northgate - Greenwood",
+    "null_safe_name": "61",
+    "name": "61"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Shoreline South/148 - Mountlake Terrace Station",
+    "null_safe_name": "333",
+    "name": "333"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Kirkland Transit Center - Eastgate P&R",
+    "null_safe_name": "245",
+    "name": "245"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Tahlequah - Vashon - Downtown Seattle",
+    "null_safe_name": "118",
+    "name": "118"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "UW/Cascadia College - Duvall",
+    "null_safe_name": "931",
+    "name": "931"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Dockton - Vashon - Downtown Seattle",
+    "null_safe_name": "119",
+    "name": "119"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Northgate - Roosevelt - University District",
+    "null_safe_name": "67",
+    "name": "67"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Enumclaw - Auburn Station",
+    "null_safe_name": "915",
+    "name": "915"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Interlaken Park - Capitol Hill - Downtown Seattle",
+    "null_safe_name": "12",
+    "name": "12"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Sand Point - Green Lake - Downtown Seattle",
+    "null_safe_name": "62",
+    "name": "62"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "South Bellevue - Eastgate P&R - Bellevue TC",
+    "null_safe_name": "226",
+    "name": "226"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Lake Kathleen - Downtown Seattle",
+    "null_safe_name": "111",
+    "name": "111"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "West Magnolia - Downtown Seattle",
+    "null_safe_name": "24",
+    "name": "24"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Federal Way S 320th P&R-Federal Way -First Hill",
+    "null_safe_name": "193",
+    "name": "193"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Shorewood - Downtown Seattle",
+    "null_safe_name": "113",
+    "name": "113"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Bellevue TC-South Bellevue-Eastgate-Renton TC",
+    "null_safe_name": "240",
+    "name": "240"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Lake City  - University District",
+    "null_safe_name": "65",
+    "name": "65"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Kingsgate P&R - Redmond Town Center",
+    "null_safe_name": "930",
+    "name": "930"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Totem Lake TC-Kirkand TC-UW Link Sta-Univ Dist",
+    "null_safe_name": "255",
+    "name": "255"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Southcenter - Alaska Junction - Admiral District",
+    "null_safe_name": "128",
+    "name": "128"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Northgate - Lake City - Sand Point - Univ District",
+    "null_safe_name": "75",
+    "name": "75"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Seattle Pacific - Downtown Seattle",
+    "null_safe_name": "13",
+    "name": "13"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Enumclaw - Renton TC",
+    "null_safe_name": "907",
+    "name": "907"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Burien Transit Center - Downtown Seattle",
+    "null_safe_name": "121",
+    "name": "121"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Prentice St - Rainier Beach - Downtown Seattle",
+    "null_safe_name": "7",
+    "name": "7"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "University District - Eastlake - Downtown Seattle",
+    "null_safe_name": "70",
+    "name": "70"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Tukwila International Blvd Sta - Downtown Seattle",
+    "null_safe_name": "124",
+    "name": "124"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Westwood Vill - S Seattle Coll - Downtown Seattle",
+    "null_safe_name": "125",
+    "name": "125"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Ballard - Golden Gardens",
+    "null_safe_name": "Golden Gardens Direct",
+    "name": "Golden Gardens Direct"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "West Seattle - SODO - Beacon Hill - Columbia City",
+    "null_safe_name": "50",
+    "name": "50"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Lakeside School - Houghton P&R",
+    "null_safe_name": "981",
+    "name": "981"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Capitol Hill - Mt. Si",
+    "null_safe_name": "Trailhead Direct Mt. Si",
+    "name": "Trailhead Direct Mt. Si"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Westwood Villge-Shorewood-Gatewood-Alaska Junction",
+    "null_safe_name": "22",
+    "name": "22"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Duvall - Redmond Transit Center",
+    "null_safe_name": "224",
+    "name": "224"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "S Mercer Island-Island Crest Way-Mercer Island P&R",
+    "null_safe_name": "204",
+    "name": "204"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Renton Transit Center - Downtown Seattle",
+    "null_safe_name": "101",
+    "name": "101"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Fairwood - Downtown Seattle",
+    "null_safe_name": "102",
+    "name": "102"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Renton Highlands - Renton Transit Center",
+    "null_safe_name": "105",
+    "name": "105"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Alaska Junction - Genesee Hill - Admiral District",
+    "null_safe_name": "57",
+    "name": "57"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Renton Transit Center - Skyway - Downtown Seattle",
+    "null_safe_name": "106",
+    "name": "106"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Southcenter - SeaTac - Kent Des Moines Station",
+    "null_safe_name": "156",
+    "name": "156"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Renton Transit Center - Rainier Beach",
+    "null_safe_name": "107",
+    "name": "107"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Westwood Village - Georgetown - Broadway",
+    "null_safe_name": "60",
+    "name": "60"
+  },
+  {
+    "route_id": "1",
+    "long_name": "B-Line Rapid Ride",
+    "description": "Redmond TC - Overlake TC - Bellevue TC",
+    "null_safe_name": "B Line",
+    "name": "B Line"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Madison Park - Capitol Hill - Downtown Seattle",
+    "null_safe_name": "11",
+    "name": "11"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Seacrest Park - Admiral District - Alki",
+    "null_safe_name": "775",
+    "name": "775"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Alki - Admiral District - Downtown Seattle",
+    "null_safe_name": "56",
+    "name": "56"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Kinnear - Downtown Seattle",
+    "null_safe_name": "1",
+    "name": "1"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Capitol Hill - Downtown Seattle",
+    "null_safe_name": "10",
+    "name": "10"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Kent Des Moines Station - Burien TC",
+    "null_safe_name": "166",
+    "name": "166"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Twin Lakes - Federal Way",
+    "null_safe_name": "903",
+    "name": "903"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Summit - Downtown Seattle - Madrona",
+    "null_safe_name": "3",
+    "name": "3"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Fairwood - Southcenter - Tukwila Sounder Station",
+    "null_safe_name": "906",
+    "name": "906"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Downtown Kent - Kent East Hill",
+    "null_safe_name": "914",
+    "name": "914"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Aurora Village - Northgate Station - First Hill",
+    "null_safe_name": "303",
+    "name": "303"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Green River College - Kent - Kent Des Moines Stn",
+    "null_safe_name": "164",
+    "name": "164"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Mirror Lake - Federal Way",
+    "null_safe_name": "901",
+    "name": "901"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Loyal Heights-Sunset Hill-Ballard-Downtown Seattle",
+    "null_safe_name": "17",
+    "name": "17"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Children's Hospital - Fremont - Central Magnolia",
+    "null_safe_name": "31",
+    "name": "31"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Federal Way S 320th P&R - Downtown Seattle",
+    "null_safe_name": "177",
+    "name": "177"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Maple Valley - Kent Sounder Station",
+    "null_safe_name": "168",
+    "name": "168"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "No. Bend-Snoqualmie-Fall City-Carnation-Duvall",
+    "null_safe_name": "Valley Shuttle",
+    "name": "Valley Shuttle"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Duvall - Monroe Shuttle",
+    "null_safe_name": "Duvall-Monroe Shuttle",
+    "name": "Duvall-Monroe Shuttle"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Mt Baker - Downtown Seattle",
+    "null_safe_name": "14",
+    "name": "14"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Bitter Lake - Roosevelt - University District",
+    "null_safe_name": "77",
+    "name": "77"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Burien TC - Georgetown - Downtown Seattle",
+    "null_safe_name": "131",
+    "name": "131"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Seacrest Park - West Seattle Junction",
+    "null_safe_name": "773",
+    "name": "773"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Burien TC - South Park - Downtown Seattle",
+    "null_safe_name": "132",
+    "name": "132"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Northgte-Ballard-Fremont-Westlake-Downtown Seattle",
+    "null_safe_name": "40",
+    "name": "40"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Seattle Center - Capitol Hill - Rainier Beach",
+    "null_safe_name": "8",
+    "name": "8"
+  },
+  {
+    "route_id": "1",
+    "long_name": "C-Line Rapid Ride",
+    "description": "Westwood Village - Downtown Seattle",
+    "null_safe_name": "C Line",
+    "name": "C Line"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Rainier Beach - Columbia City - Broadway",
+    "null_safe_name": "9",
+    "name": "9"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Kent Sounder Station - Renton Transit Center",
+    "null_safe_name": "153",
+    "name": "153"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Whittier Heights - Fremont - Downtown Seattle",
+    "null_safe_name": "28",
+    "name": "28"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Issaquah Transit Center - Marymoor Village Station",
+    "null_safe_name": "269",
+    "name": "269"
+  },
+  {
+    "route_id": "1",
+    "long_name": "D-Line Rapid Ride",
+    "description": "Blue Ridge/Crown Hill - Ballard - Downtown Seattle",
+    "null_safe_name": "D Line",
+    "name": "D Line"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Colman Park - Downtown Seattle",
+    "null_safe_name": "27",
+    "name": "27"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Issaquah - University District",
+    "null_safe_name": "271",
+    "name": "271"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Fairwood - Renton Transit Center",
+    "null_safe_name": "148",
+    "name": "148"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Kent Station - Southcenter - Downtown Seattle",
+    "null_safe_name": "150",
+    "name": "150"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "First Hill-Pioneer Square-Downtown Seattle-Belltown",
+    "null_safe_name": "Easy Loop",
+    "name": "Easy Loop"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "North Bend - Issaquah Transit Center",
+    "null_safe_name": "208",
+    "name": "208"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Twin Lakes P&R - Auburn Station - Green River Coll",
+    "null_safe_name": "181",
+    "name": "181"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Children's Hospital - Fremont -Seattle Center West",
+    "null_safe_name": "32",
+    "name": "32"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Northeast Tacoma - Federal Way",
+    "null_safe_name": "182",
+    "name": "182"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Discovery Park - Downtown Seattle",
+    "null_safe_name": "33",
+    "name": "33"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Federal Way - Star Lake - Kent Station",
+    "null_safe_name": "183",
+    "name": "183"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "Shoreline Comm Coll-Aurora Village TC-Kenmore P&R",
+    "null_safe_name": "331",
+    "name": "331"
+  },
+  {
+    "route_id": "1",
+    "long_name": "",
+    "description": "West Queen Anne - Downtown Seattle - Madrona Park",
+    "null_safe_name": "2",
+    "name": "2"
+  },
+  {
+    "route_id": "23",
+    "long_name": "",
+    "description": "Streetcar: Fairview/Aloha - Westlake/McGraw",
+    "null_safe_name": "South Lake Union Streetcar",
+    "name": "South Lake Union Streetcar"
+  },
+  {
+    "route_id": "23",
+    "long_name": "",
+    "description": "Streetcar: Pioneer Square - Capitol Hill",
+    "null_safe_name": "First Hill Streetcar",
+    "name": "First Hill Streetcar"
+  },
+  {
+    "route_id": "3",
+    "long_name": "6th Ave / Pacific Ave",
+    "description": "",
+    "null_safe_name": "1",
+    "name": "1"
+  },
+  {
+    "route_id": "3",
+    "long_name": "S 19th St / Bridgeport",
+    "description": "",
+    "null_safe_name": "2",
+    "name": "2"
+  },
+  {
+    "route_id": "3",
+    "long_name": "Lakewood / Tacoma",
+    "description": "",
+    "null_safe_name": "3",
+    "name": "3"
+  },
+  {
+    "route_id": "3",
+    "long_name": "Lakewood / South Hill",
+    "description": "",
+    "null_safe_name": "4",
+    "name": "4"
+  },
+  {
+    "route_id": "3",
+    "long_name": "Federal Way",
+    "description": "",
+    "null_safe_name": "500",
+    "name": "500"
+  },
+  {
+    "route_id": "3",
+    "long_name": "Milton / Federal Way",
+    "description": "",
+    "null_safe_name": "501",
+    "name": "501"
+  },
+  {
+    "route_id": "3",
+    "long_name": "Puyallup / Downtown Tacoma",
+    "description": "",
+    "null_safe_name": "400",
+    "name": "400"
+  },
+  {
+    "route_id": "3",
+    "long_name": "Meridian",
+    "description": "",
+    "null_safe_name": "402",
+    "name": "402"
+  },
+  {
+    "route_id": "3",
+    "long_name": "Puyallup / S 72nd St",
+    "description": "",
+    "null_safe_name": "409",
+    "name": "409"
+  },
+  {
+    "route_id": "3",
+    "long_name": "Lakewood Station / Wa State Fair",
+    "description": "",
+    "null_safe_name": "532",
+    "name": "532"
+  },
+  {
+    "route_id": "3",
+    "long_name": "S Hill / Wa State Fair",
+    "description": "",
+    "null_safe_name": "533",
+    "name": "533"
+  },
+  {
+    "route_id": "3",
+    "long_name": "S 72nd St",
+    "description": "",
+    "null_safe_name": "202",
+    "name": "202"
+  },
+  {
+    "route_id": "3",
+    "long_name": "Pacific Hwy / Tillcum / Madigan",
+    "description": "",
+    "null_safe_name": "206",
+    "name": "206"
+  },
+  {
+    "route_id": "3",
+    "long_name": "Steilacoom",
+    "description": "",
+    "null_safe_name": "212",
+    "name": "212"
+  },
+  {
+    "route_id": "3",
+    "long_name": "Fan Zone Express",
+    "description": "",
+    "null_safe_name": "333",
+    "name": "333"
+  },
+  {
+    "route_id": "3",
+    "long_name": "Washington",
+    "description": "",
+    "null_safe_name": "214",
+    "name": "214"
+  },
+  {
+    "route_id": "3",
+    "long_name": "Gig Harbor",
+    "description": "",
+    "null_safe_name": "100",
+    "name": "100"
+  },
+  {
+    "route_id": "3",
+    "long_name": "Gig Harbor Waterfront Connector",
+    "description": "",
+    "null_safe_name": "101",
+    "name": "101"
+  },
+  {
+    "route_id": "3",
+    "long_name": "Pearl St",
+    "description": "",
+    "null_safe_name": "10",
+    "name": "10"
+  },
+  {
+    "route_id": "3",
+    "long_name": "Pt Defiance",
+    "description": "",
+    "null_safe_name": "11",
+    "name": "11"
+  },
+  {
+    "route_id": "3",
+    "long_name": "North End",
+    "description": "",
+    "null_safe_name": "16",
+    "name": "16"
+  },
+  {
+    "route_id": "3",
+    "long_name": "S 12th St",
+    "description": "",
+    "null_safe_name": "28",
+    "name": "28"
+  },
+  {
+    "route_id": "3",
+    "long_name": "Lakeland Hills Express",
+    "description": "",
+    "null_safe_name": "497",
+    "name": "497"
+  },
+  {
+    "route_id": "3",
+    "long_name": "S 56th St / Salishan",
+    "description": "",
+    "null_safe_name": "41",
+    "name": "41"
+  },
+  {
+    "route_id": "3",
+    "long_name": "McKinley Ave",
+    "description": "",
+    "null_safe_name": "42",
+    "name": "42"
+  },
+  {
+    "route_id": "3",
+    "long_name": "Yakima",
+    "description": "",
+    "null_safe_name": "45",
+    "name": "45"
+  },
+  {
+    "route_id": "3",
+    "long_name": "Sheridan / M St",
+    "description": "",
+    "null_safe_name": "48",
+    "name": "48"
+  },
+  {
+    "route_id": "3",
+    "long_name": "Fircrest / TCC",
+    "description": "",
+    "null_safe_name": "52",
+    "name": "52"
+  },
+  {
+    "route_id": "3",
+    "long_name": "University Place",
+    "description": "",
+    "null_safe_name": "53",
+    "name": "53"
+  },
+  {
+    "route_id": "3",
+    "long_name": "S 38th St / Portland Ave",
+    "description": "",
+    "null_safe_name": "54",
+    "name": "54"
+  },
+  {
+    "route_id": "3",
+    "long_name": "Tacoma Mall",
+    "description": "",
+    "null_safe_name": "55",
+    "name": "55"
+  },
+  {
+    "route_id": "3",
+    "long_name": "Union / S 19th St / Hilltop",
+    "description": "",
+    "null_safe_name": "57",
+    "name": "57"
+  },
+  {
+    "route_id": "3",
+    "long_name": "Stream TDS / Spanaway TC",
+    "description": "Stream Community Line",
+    "null_safe_name": "STCL",
+    "name": "STCL"
+  },
+  {
+    "route_id": "29",
+    "long_name": "Smokey Point TC - Lynnwood City Center Station",
+    "description": "",
+    "null_safe_name": "201",
+    "name": "201"
+  },
+  {
+    "route_id": "29",
+    "long_name": "Smokey Point TC - Lynnwood City Center Station",
+    "description": "",
+    "null_safe_name": "202",
+    "name": "202"
+  },
+  {
+    "route_id": "29",
+    "long_name": "Smokey Point TC - Lake Stevens TC",
+    "description": "",
+    "null_safe_name": "209",
+    "name": "209"
+  },
+  {
+    "route_id": "29",
+    "long_name": "Arlington - Smokey Point TC",
+    "description": "",
+    "null_safe_name": "220",
+    "name": "220"
+  },
+  {
+    "route_id": "29",
+    "long_name": "Mariner P&R - Aurora Village TC",
+    "description": "",
+    "null_safe_name": "101",
+    "name": "101"
+  },
+  {
+    "route_id": "29",
+    "long_name": "Marysville - Tulalip",
+    "description": "",
+    "null_safe_name": "222",
+    "name": "222"
+  },
+  {
+    "route_id": "29",
+    "long_name": "Edmonds Station - Lynnwood City Center Station",
+    "description": "",
+    "null_safe_name": "102",
+    "name": "102"
+  },
+  {
+    "route_id": "29",
+    "long_name": "Hardeson Road - Lynnwood City Center Station",
+    "description": "",
+    "null_safe_name": "103",
+    "name": "103"
+  },
+  {
+    "route_id": "29",
+    "long_name": "Mariner P&R - UW Bothell/Cascadia College",
+    "description": "",
+    "null_safe_name": "106",
+    "name": "106"
+  },
+  {
+    "route_id": "29",
+    "long_name": "Ash Way P&R - Lake Stevens TC",
+    "description": "",
+    "null_safe_name": "109",
+    "name": "109"
+  },
+  {
+    "route_id": "29",
+    "long_name": "Darrington - Smokey Point TC",
+    "description": "",
+    "null_safe_name": "230",
+    "name": "230"
+  },
+  {
+    "route_id": "29",
+    "long_name": "Brier - Mountlake Terrace Station",
+    "description": "",
+    "null_safe_name": "111",
+    "name": "111"
+  },
+  {
+    "route_id": "29",
+    "long_name": "Mountlake Terrace Station - Ash Way P&R",
+    "description": "",
+    "null_safe_name": "112",
+    "name": "112"
+  },
+  {
+    "route_id": "29",
+    "long_name": "Aurora Village TC - Lynnwood City Center Station",
+    "description": "",
+    "null_safe_name": "114",
+    "name": "114"
+  },
+  {
+    "route_id": "29",
+    "long_name": "Mukilteo Ferry - Lynnwood City Center Station",
+    "description": "",
+    "null_safe_name": "117",
+    "name": "117"
+  },
+  {
+    "route_id": "29",
+    "long_name": "Ash Way P&R - Mountlake Terrace Station",
+    "description": "",
+    "null_safe_name": "119",
+    "name": "119"
+  },
+  {
+    "route_id": "29",
+    "long_name": "Stanwood Downtown - Smokey Point TC",
+    "description": "",
+    "null_safe_name": "240",
+    "name": "240"
+  },
+  {
+    "route_id": "29",
+    "long_name": "UW Bothell/Cascadia - Lynnwood City Center Station",
+    "description": "",
+    "null_safe_name": "120",
+    "name": "120"
+  },
+  {
+    "route_id": "29",
+    "long_name": "Ash Way P&R - UW Bothell/Cascadia College",
+    "description": "",
+    "null_safe_name": "121",
+    "name": "121"
+  },
+  {
+    "route_id": "29",
+    "long_name": "Edmonds Station - Lynnwood City Center Station",
+    "description": "",
+    "null_safe_name": "130",
+    "name": "130"
+  },
+  {
+    "route_id": "29",
+    "long_name": "Gold Bar - Everett Station",
+    "description": "",
+    "null_safe_name": "270",
+    "name": "270"
+  },
+  {
+    "route_id": "29",
+    "long_name": "Gold Bar - Everett Station",
+    "description": "",
+    "null_safe_name": "271",
+    "name": "271"
+  },
+  {
+    "route_id": "29",
+    "long_name": "Granite Falls P&R - Everett Station",
+    "description": "",
+    "null_safe_name": "280",
+    "name": "280"
+  },
+  {
+    "route_id": "29",
+    "long_name": "Edmonds Station - Silver Firs",
+    "description": "",
+    "null_safe_name": "166",
+    "name": "166"
+  },
+  {
+    "route_id": "29",
+    "long_name": "Silver Firs - Lynnwood City Center Station",
+    "description": "",
+    "null_safe_name": "901",
+    "name": "901"
+  },
+  {
+    "route_id": "29",
+    "long_name": "Lake Stevens TC - Lynnwood City Center Station",
+    "description": "",
+    "null_safe_name": "903",
+    "name": "903"
+  },
+  {
+    "route_id": "29",
+    "long_name": "Marysville - Lynnwood City Center Station",
+    "description": "",
+    "null_safe_name": "904",
+    "name": "904"
+  },
+  {
+    "route_id": "29",
+    "long_name": "Stanwood Downtown - Lynnwood City Center Station",
+    "description": "",
+    "null_safe_name": "905",
+    "name": "905"
+  },
+  {
+    "route_id": "29",
+    "long_name": "Stanwood I-5 P&R - Paine Field Airport",
+    "description": "",
+    "null_safe_name": "907",
+    "name": "907"
+  },
+  {
+    "route_id": "29",
+    "long_name": "Bellevue - Snohomish P&R",
+    "description": "",
+    "null_safe_name": "908",
+    "name": "908"
+  },
+  {
+    "route_id": "29",
+    "long_name": "Edmonds Station - Mountlake Terrace Station",
+    "description": "",
+    "null_safe_name": "909",
+    "name": "909"
+  },
+  {
+    "route_id": "29",
+    "long_name": "Everett Station - Shoreline North/185th Station",
+    "description": "",
+    "null_safe_name": "Swift Blue",
+    "name": "Swift Blue"
+  },
+  {
+    "route_id": "29",
+    "long_name": "Seaway TC - Canyon Park P&R",
+    "description": "",
+    "null_safe_name": "Swift Green",
+    "name": "Swift Green"
+  },
+  {
+    "route_id": "29",
+    "long_name": "Edmonds College - McCollum Park P&R",
+    "description": "",
+    "null_safe_name": "Swift Orange",
+    "name": "Swift Orange"
+  },
+  {
+    "route_id": "19",
+    "long_name": "Capitol Blvd",
+    "description": "",
+    "null_safe_name": "13",
+    "name": "13"
+  },
+  {
+    "route_id": "19",
+    "long_name": "Littlerock Rd",
+    "description": "",
+    "null_safe_name": "15",
+    "name": "15"
+  },
+  {
+    "route_id": "19",
+    "long_name": "Mottman Rd",
+    "description": "",
+    "null_safe_name": "16",
+    "name": "16"
+  },
+  {
+    "route_id": "19",
+    "long_name": "Legion Way/Union Ave",
+    "description": "",
+    "null_safe_name": "20",
+    "name": "20"
+  },
+  {
+    "route_id": "19",
+    "long_name": "Friendly Grove",
+    "description": "",
+    "null_safe_name": "21",
+    "name": "21"
+  },
+  {
+    "route_id": "19",
+    "long_name": "Union Ave/Legion Way",
+    "description": "",
+    "null_safe_name": "22",
+    "name": "22"
+  },
+  {
+    "route_id": "19",
+    "long_name": "Capitol Campus/SPSCC",
+    "description": "",
+    "null_safe_name": "24",
+    "name": "24"
+  },
+  {
+    "route_id": "19",
+    "long_name": "Capital Mall Dr",
+    "description": "",
+    "null_safe_name": "30",
+    "name": "30"
+  },
+  {
+    "route_id": "19",
+    "long_name": "Conger Ave/Capital Mall",
+    "description": "",
+    "null_safe_name": "31",
+    "name": "31"
+  },
+  {
+    "route_id": "19",
+    "long_name": "SPSCC/The Evergreen State College",
+    "description": "",
+    "null_safe_name": "32",
+    "name": "32"
+  },
+  {
+    "route_id": "19",
+    "long_name": "Black Lake Blvd",
+    "description": "",
+    "null_safe_name": "33",
+    "name": "33"
+  },
+  {
+    "route_id": "19",
+    "long_name": "The Evergreen State College/Capital Mall",
+    "description": "",
+    "null_safe_name": "34",
+    "name": "34"
+  },
+  {
+    "route_id": "19",
+    "long_name": "Courthouse/Capital Mall",
+    "description": "",
+    "null_safe_name": "35",
+    "name": "35"
+  },
+  {
+    "route_id": "19",
+    "long_name": "Nightline",
+    "description": "",
+    "null_safe_name": "41",
+    "name": "41"
+  },
+  {
+    "route_id": "19",
+    "long_name": "Martin Way",
+    "description": "",
+    "null_safe_name": "50",
+    "name": "50"
+  },
+  {
+    "route_id": "19",
+    "long_name": "Farmers Market/Lacey",
+    "description": "",
+    "null_safe_name": "51",
+    "name": "51"
+  },
+  {
+    "route_id": "19",
+    "long_name": "College St/Yelm Hwy",
+    "description": "",
+    "null_safe_name": "52",
+    "name": "52"
+  },
+  {
+    "route_id": "19",
+    "long_name": "Tumwater/Lacey",
+    "description": "",
+    "null_safe_name": "70",
+    "name": "70"
+  },
+  {
+    "route_id": "19",
+    "long_name": "Britton Pkwy/Marvin Rd",
+    "description": "",
+    "null_safe_name": "71",
+    "name": "71"
+  },
+  {
+    "route_id": "19",
+    "long_name": "Carpenter Rd/Corporate Center",
+    "description": "",
+    "null_safe_name": "72",
+    "name": "72"
+  },
+  {
+    "route_id": "19",
+    "long_name": "Golf Club Rd/22nd Ave",
+    "description": "",
+    "null_safe_name": "73",
+    "name": "73"
+  },
+  {
+    "route_id": "19",
+    "long_name": "Lilly Rd/26th Ave",
+    "description": "",
+    "null_safe_name": "74",
+    "name": "74"
+  },
+  {
+    "route_id": "19",
+    "long_name": "Pacific Ave/Steilacoom Rd",
+    "description": "",
+    "null_safe_name": "75",
+    "name": "75"
+  },
+  {
+    "route_id": "19",
+    "long_name": "Ruddell/SPSCC",
+    "description": "",
+    "null_safe_name": "76",
+    "name": "76"
+  },
+  {
+    "route_id": "19",
+    "long_name": "Marvin Rd/Willamette Dr",
+    "description": "",
+    "null_safe_name": "77",
+    "name": "77"
+  },
+  {
+    "route_id": "19",
+    "long_name": "Willamette Dr/Marvin Rd",
+    "description": "",
+    "null_safe_name": "78",
+    "name": "78"
+  },
+  {
+    "route_id": "19",
+    "long_name": "Yelm/Lacey",
+    "description": "",
+    "null_safe_name": "90",
+    "name": "90"
+  },
+  {
+    "route_id": "19",
+    "long_name": "Crosstown Express",
+    "description": "",
+    "null_safe_name": "9X",
+    "name": "9X"
+  },
+  {
+    "route_id": "19",
+    "long_name": "Lakewood Commuter",
+    "description": "",
+    "null_safe_name": "600",
+    "name": "600"
+  },
+  {
+    "route_id": "19",
+    "long_name": "Lacey Connector",
+    "description": "",
+    "null_safe_name": "610",
+    "name": "610"
+  },
+  {
+    "route_id": "95",
+    "long_name": "Tahlequah - Point Defiance",
+    "description": "",
+    "null_safe_name": "95_2116",
+    "name": ""
+  },
+  {
+    "route_id": "95",
+    "long_name": "Southworth - Vashon Island",
+    "description": "",
+    "null_safe_name": "95_2022",
+    "name": ""
+  },
+  {
+    "route_id": "95",
+    "long_name": "Clinton - Mukilteo",
+    "description": "",
+    "null_safe_name": "95_514",
+    "name": ""
+  },
+  {
+    "route_id": "95",
+    "long_name": "Southworth - Fauntleroy",
+    "description": "",
+    "null_safe_name": "95_209",
+    "name": ""
+  },
+  {
+    "route_id": "95",
+    "long_name": "Friday Harbor - Anacortes",
+    "description": "",
+    "null_safe_name": "95_101",
+    "name": ""
+  },
+  {
+    "route_id": "95",
+    "long_name": "Vashon Island - Fauntleroy",
+    "description": "",
+    "null_safe_name": "95_229",
+    "name": ""
+  },
+  {
+    "route_id": "95",
+    "long_name": "Anacortes - Friday Harbor",
+    "description": "",
+    "null_safe_name": "95_110",
+    "name": ""
+  },
+  {
+    "route_id": "95",
+    "long_name": "Anacortes - Lopez Island",
+    "description": "",
+    "null_safe_name": "95_113",
+    "name": ""
+  },
+  {
+    "route_id": "95",
+    "long_name": "Anacortes - Orcas Island",
+    "description": "",
+    "null_safe_name": "95_115",
+    "name": ""
+  },
+  {
+    "route_id": "95",
+    "long_name": "Anacortes - Shaw Island",
+    "description": "",
+    "null_safe_name": "95_118",
+    "name": ""
+  },
+  {
+    "route_id": "95",
+    "long_name": "Kingston - Edmonds",
+    "description": "",
+    "null_safe_name": "95_128",
+    "name": ""
+  },
+  {
+    "route_id": "95",
+    "long_name": "Lopez Island - Anacortes",
+    "description": "",
+    "null_safe_name": "95_131",
+    "name": ""
+  },
+  {
+    "route_id": "95",
+    "long_name": "Bainbridge Island - Seattle",
+    "description": "",
+    "null_safe_name": "95_37",
+    "name": ""
+  },
+  {
+    "route_id": "95",
+    "long_name": "Shaw Island - Friday Harbor",
+    "description": "",
+    "null_safe_name": "95_1810",
+    "name": ""
+  },
+  {
+    "route_id": "95",
+    "long_name": "Mukilteo - Clinton",
+    "description": "",
+    "null_safe_name": "95_145",
+    "name": ""
+  },
+  {
+    "route_id": "95",
+    "long_name": "Bremerton - Seattle",
+    "description": "",
+    "null_safe_name": "95_47",
+    "name": ""
+  },
+  {
+    "route_id": "95",
+    "long_name": "Orcas Island - Anacortes",
+    "description": "",
+    "null_safe_name": "95_151",
+    "name": ""
+  },
+  {
+    "route_id": "95",
+    "long_name": "Shaw Island - Orcas Island",
+    "description": "",
+    "null_safe_name": "95_1815",
+    "name": ""
+  },
+  {
+    "route_id": "95",
+    "long_name": "Shaw Island - Lopez Island",
+    "description": "",
+    "null_safe_name": "95_1813",
+    "name": ""
+  },
+  {
+    "route_id": "95",
+    "long_name": "Port Townsend - Coupeville",
+    "description": "",
+    "null_safe_name": "95_1711",
+    "name": ""
+  },
+  {
+    "route_id": "95",
+    "long_name": "Seattle - Bainbridge Island",
+    "description": "",
+    "null_safe_name": "95_73",
+    "name": ""
+  },
+  {
+    "route_id": "95",
+    "long_name": "Seattle - Bremerton",
+    "description": "",
+    "null_safe_name": "95_74",
+    "name": ""
+  },
+  {
+    "route_id": "95",
+    "long_name": "Shaw Island - Anacortes",
+    "description": "",
+    "null_safe_name": "95_181",
+    "name": ""
+  },
+  {
+    "route_id": "95",
+    "long_name": "Point Defiance - Tahlequah",
+    "description": "",
+    "null_safe_name": "95_1621",
+    "name": ""
+  },
+  {
+    "route_id": "95",
+    "long_name": "Orcas Island - Lopez Island",
+    "description": "",
+    "null_safe_name": "95_1513",
+    "name": ""
+  },
+  {
+    "route_id": "95",
+    "long_name": "Orcas Island - Friday Harbor",
+    "description": "",
+    "null_safe_name": "95_1510",
+    "name": ""
+  },
+  {
+    "route_id": "95",
+    "long_name": "Orcas Island - Shaw Island",
+    "description": "",
+    "null_safe_name": "95_1518",
+    "name": ""
+  },
+  {
+    "route_id": "95",
+    "long_name": "Lopez Island - Orcas Island",
+    "description": "",
+    "null_safe_name": "95_1315",
+    "name": ""
+  },
+  {
+    "route_id": "95",
+    "long_name": "Lopez Island - Friday Harbor",
+    "description": "",
+    "null_safe_name": "95_1310",
+    "name": ""
+  },
+  {
+    "route_id": "95",
+    "long_name": "Lopez Island - Shaw Island",
+    "description": "",
+    "null_safe_name": "95_1318",
+    "name": ""
+  },
+  {
+    "route_id": "95",
+    "long_name": "Coupeville  - Port Townsend",
+    "description": "",
+    "null_safe_name": "95_1117",
+    "name": ""
+  },
+  {
+    "route_id": "95",
+    "long_name": "Fauntleroy - Southworth",
+    "description": "",
+    "null_safe_name": "95_920",
+    "name": ""
+  },
+  {
+    "route_id": "95",
+    "long_name": "Fauntleroy - Vashon Island",
+    "description": "",
+    "null_safe_name": "95_922",
+    "name": ""
+  },
+  {
+    "route_id": "95",
+    "long_name": "Edmonds - Kingston",
+    "description": "",
+    "null_safe_name": "95_812",
+    "name": ""
+  },
+  {
+    "route_id": "95",
+    "long_name": "Vashon Island - Southworth",
+    "description": "",
+    "null_safe_name": "95_2220",
+    "name": ""
+  },
+  {
+    "route_id": "95",
+    "long_name": "Friday Harbor - Shaw Island",
+    "description": "",
+    "null_safe_name": "95_1018",
+    "name": ""
+  },
+  {
+    "route_id": "95",
+    "long_name": "Friday Harbor - Orcas Island",
+    "description": "",
+    "null_safe_name": "95_1015",
+    "name": ""
+  },
+  {
+    "route_id": "95",
+    "long_name": "Friday Harbor - Lopez Island",
+    "description": "",
+    "null_safe_name": "95_1013",
+    "name": ""
+  },
+  {
+    "route_id": "51",
+    "long_name": "Amtrak Cascades",
+    "description": "",
+    "null_safe_name": "51_60",
+    "name": ""
+  },
+  {
+    "route_id": "40",
+    "long_name": "Everett - Bellevue",
+    "description": "",
+    "null_safe_name": "532",
+    "name": "532"
+  },
+  {
+    "route_id": "40",
+    "long_name": "Lynnwood - Bellevue",
+    "description": "",
+    "null_safe_name": "535",
+    "name": "535"
+  },
+  {
+    "route_id": "40",
+    "long_name": "Bellevue - Sea-Tac - W. Seattle",
+    "description": "",
+    "null_safe_name": "560",
+    "name": "560"
+  },
+  {
+    "route_id": "40",
+    "long_name": "Lakewood - SeaTac",
+    "description": "",
+    "null_safe_name": "574",
+    "name": "574"
+  },
+  {
+    "route_id": "40",
+    "long_name": "Federal Way - Seattle",
+    "description": "",
+    "null_safe_name": "577",
+    "name": "577"
+  },
+  {
+    "route_id": "40",
+    "long_name": "Puyallup - Seattle",
+    "description": "",
+    "null_safe_name": "578",
+    "name": "578"
+  },
+  {
+    "route_id": "40",
+    "long_name": "Everett - Seattle",
+    "description": "N Line runs between Everett Station and King Street Station weekdays",
+    "null_safe_name": "N Line",
+    "name": "N Line"
+  },
+  {
+    "route_id": "40",
+    "long_name": "Puyallup / Lakewood",
+    "description": "",
+    "null_safe_name": "580",
+    "name": "580"
+  },
+  {
+    "route_id": "40",
+    "long_name": "Tacoma - U. District",
+    "description": "",
+    "null_safe_name": "586",
+    "name": "586"
+  },
+  {
+    "route_id": "40",
+    "long_name": "Tacoma - Seattle",
+    "description": "",
+    "null_safe_name": "590",
+    "name": "590"
+  },
+  {
+    "route_id": "40",
+    "long_name": "Olympia/DuPont - Seattle",
+    "description": "",
+    "null_safe_name": "592",
+    "name": "592"
+  },
+  {
+    "route_id": "40",
+    "long_name": "Lakewood - Seattle",
+    "description": "",
+    "null_safe_name": "594",
+    "name": "594"
+  },
+  {
+    "route_id": "40",
+    "long_name": "Gig Harbor - Seattle",
+    "description": "",
+    "null_safe_name": "595",
+    "name": "595"
+  },
+  {
+    "route_id": "40",
+    "long_name": "Bonney Lake - Sumner",
+    "description": "",
+    "null_safe_name": "596",
+    "name": "596"
+  },
+  {
+    "route_id": "40",
+    "long_name": "Night Bus Lakewood / Downtown Seattle",
+    "description": "",
+    "null_safe_name": "597",
+    "name": "597"
+  },
+  {
+    "route_id": "40",
+    "long_name": "Tacoma Dome - St Joseph",
+    "description": "T Line runs between Tacoma Dome Station and St Joseph Station seven days a week",
+    "null_safe_name": "T Line",
+    "name": "T Line"
+  },
+  {
+    "route_id": "40",
+    "long_name": "Redmond - University District",
+    "description": "Redmond - University District",
+    "null_safe_name": "542",
+    "name": "542"
+  },
+  {
+    "route_id": "40",
+    "long_name": "Seattle - Tacoma/Lakewood",
+    "description": "S Line runs between King Street Station and Tacoma Dome or Lakewood Stations weekdays",
+    "null_safe_name": "S Line",
+    "name": "S Line"
+  },
+  {
+    "route_id": "40",
+    "long_name": "",
+    "description": "Auburn - Redmond",
+    "null_safe_name": "566",
+    "name": "566"
+  },
+  {
+    "route_id": "40",
+    "long_name": "2 Line Shuttle Bus",
+    "description": "",
+    "null_safe_name": "Shuttle",
+    "name": "Shuttle"
+  },
+  {
+    "route_id": "40",
+    "long_name": "Woodinville - Seattle",
+    "description": "Woodinville - Roosevelt Link Station",
+    "null_safe_name": "522",
+    "name": "522"
+  },
+  {
+    "route_id": "40",
+    "long_name": "Redmond - Seattle",
+    "description": "Redmond - Seattle",
+    "null_safe_name": "545",
+    "name": "545"
+  },
+  {
+    "route_id": "40",
+    "long_name": "Lynnwood - Federal Way",
+    "description": "1 Line runs between Lynnwood City Center Station and Federal Way Downtown Station seven days a week",
+    "null_safe_name": "1 Line",
+    "name": "1 Line"
+  },
+  {
+    "route_id": "40",
+    "long_name": "Lynnwood - Downtown Redmond",
+    "description": "2 Line runs between Lynnwood City Center Station and Downtown Redmond Station seven days a week",
+    "null_safe_name": "2 Line",
+    "name": "2 Line"
+  },
+  {
+    "route_id": "40",
+    "long_name": "Issaquah - Seattle",
+    "description": "Issaquah - Seattle",
+    "null_safe_name": "554",
+    "name": "554"
+  },
+  {
+    "route_id": "40",
+    "long_name": "Bellevue - Seattle",
+    "description": "Bellevue - Seattle",
+    "null_safe_name": "550",
+    "name": "550"
+  },
+  {
+    "route_id": "40",
+    "long_name": "Issaquah - Northgate",
+    "description": "Issaquah-University District",
+    "null_safe_name": "556",
+    "name": "556"
+  },
+  {
+    "route_id": "40",
+    "long_name": "",
+    "description": "Redmond - Bellevue - Seattle",
+    "null_safe_name": "547",
+    "name": "547"
+  },
+  {
+    "route_id": "40",
+    "long_name": "",
+    "description": "Seattle - SeaTac Airport",
+    "null_safe_name": "570",
+    "name": "570"
+  },
+  {
+    "route_id": "40",
+    "long_name": "T Line Replacement Shuttle Bus",
+    "description": "",
+    "null_safe_name": "Shuttle",
+    "name": "Shuttle"
+  },
+  {
+    "route_id": "40",
+    "long_name": "1 Line Shuttle Bus",
+    "description": "",
+    "null_safe_name": "Shuttle",
+    "name": "Shuttle"
+  },
+  {
+    "route_id": "40",
+    "long_name": "Everett - Seattle",
+    "description": "",
+    "null_safe_name": "510",
+    "name": "510"
+  },
+  {
+    "route_id": "40",
+    "long_name": "Everett - Northgate Station",
+    "description": "",
+    "null_safe_name": "512",
+    "name": "512"
+  },
+  {
+    "route_id": "40",
+    "long_name": "Seaway Transit Ctr - Northgate Station",
+    "description": "",
+    "null_safe_name": "513",
+    "name": "513"
+  },
+  {
+    "route_id": "40",
+    "long_name": "Lynnwood City Center Station - Seattle",
+    "description": "",
+    "null_safe_name": "515",
+    "name": "515"
+  },
+  {
+    "route_id": "96",
+    "long_name": "Seattle Center - Westlake",
+    "description": "",
+    "null_safe_name": "Monorail",
+    "name": "Monorail"
+  },
+  {
+    "route_id": "97",
+    "long_name": "S to Everett Station - N to College Station",
+    "description": "",
+    "null_safe_name": "19",
+    "name": "19"
+  },
+  {
+    "route_id": "97",
+    "long_name": "N to Waterfront  - S to Everett Station",
+    "description": "",
+    "null_safe_name": "6",
+    "name": "6"
+  },
+  {
+    "route_id": "97",
+    "long_name": "S to Mariner P&R - N to Mall Station",
+    "description": "",
+    "null_safe_name": "2",
+    "name": "2"
+  },
+  {
+    "route_id": "97",
+    "long_name": "S to Seaway TC - N to Everett Station",
+    "description": "",
+    "null_safe_name": "3",
+    "name": "3"
+  },
+  {
+    "route_id": "97",
+    "long_name": "S to Everett Station - N to College Station",
+    "description": "",
+    "null_safe_name": "4",
+    "name": "4"
+  },
+  {
+    "route_id": "97",
+    "long_name": "S to Mall Station - N to College Station",
+    "description": "",
+    "null_safe_name": "7",
+    "name": "7"
+  },
+  {
+    "route_id": "97",
+    "long_name": "S to S Evt Frwy Station - N to Everett Station",
+    "description": "",
+    "null_safe_name": "8",
+    "name": "8"
+  },
+  {
+    "route_id": "97",
+    "long_name": "W to Seaway TC - E to Mall Station",
+    "description": "",
+    "null_safe_name": "12",
+    "name": "12"
+  },
+  {
+    "route_id": "97",
+    "long_name": "W to Mukilteo - E to Everett Station",
+    "description": "",
+    "null_safe_name": "18",
+    "name": "18"
+  },
+  {
+    "route_id": "97",
+    "long_name": "N to College Station - S to Mall Station",
+    "description": "",
+    "null_safe_name": "29",
+    "name": "29"
+  },
+  {
+    "route_id": "20",
+    "long_name": "North Kitsap Fast Ferry Express",
+    "description": "",
+    "null_safe_name": "301",
+    "name": "301"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Kingston/Suquamish Fast Ferry",
+    "description": "",
+    "null_safe_name": "302",
+    "name": "302"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Kingston/North Viking Fast Ferry",
+    "description": "",
+    "null_safe_name": "307",
+    "name": "307"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Poulsbo/Myhre",
+    "description": "",
+    "null_safe_name": "331",
+    "name": "331"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Poulsbo/Silverdale",
+    "description": "",
+    "null_safe_name": "332",
+    "name": "332"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Bremerton-Silverdale West",
+    "description": "",
+    "null_safe_name": "212",
+    "name": "212"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Silverdale/Bainbridge",
+    "description": "",
+    "null_safe_name": "333",
+    "name": "333"
+  },
+  {
+    "route_id": "20",
+    "long_name": "McWilliams",
+    "description": "",
+    "null_safe_name": "215",
+    "name": "215"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Bremerton-Silverdale East",
+    "description": "",
+    "null_safe_name": "217",
+    "name": "217"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Crossroads",
+    "description": "",
+    "null_safe_name": "219",
+    "name": "219"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Sunn Fjord",
+    "description": "",
+    "null_safe_name": "220",
+    "name": "220"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Perry Avenue",
+    "description": "",
+    "null_safe_name": "221",
+    "name": "221"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Gateway Express",
+    "description": "",
+    "null_safe_name": "222",
+    "name": "222"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Kariotis",
+    "description": "",
+    "null_safe_name": "223",
+    "name": "223"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Poulsbo Central",
+    "description": "",
+    "null_safe_name": "344",
+    "name": "344"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Olympic College",
+    "description": "",
+    "null_safe_name": "224",
+    "name": "224"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Tremont",
+    "description": "",
+    "null_safe_name": "104",
+    "name": "104"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Sheridan Park",
+    "description": "",
+    "null_safe_name": "225",
+    "name": "225"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Sidney",
+    "description": "",
+    "null_safe_name": "105",
+    "name": "105"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Bay Vista",
+    "description": "",
+    "null_safe_name": "226",
+    "name": "226"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Marion",
+    "description": "",
+    "null_safe_name": "228",
+    "name": "228"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Bethel",
+    "description": "",
+    "null_safe_name": "108",
+    "name": "108"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Trenton",
+    "description": "",
+    "null_safe_name": "229",
+    "name": "229"
+  },
+  {
+    "route_id": "20",
+    "long_name": "East Port Orchard",
+    "description": "",
+    "null_safe_name": "109",
+    "name": "109"
+  },
+  {
+    "route_id": "20",
+    "long_name": "West Bremerton Express",
+    "description": "",
+    "null_safe_name": "238",
+    "name": "238"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Madrona",
+    "description": "",
+    "null_safe_name": "119",
+    "name": "119"
+  },
+  {
+    "route_id": "20",
+    "long_name": "BI Downtown",
+    "description": "",
+    "null_safe_name": "385",
+    "name": "385"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Silverdale Central",
+    "description": "",
+    "null_safe_name": "265",
+    "name": "265"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Silverdale Ridgetop",
+    "description": "",
+    "null_safe_name": "266",
+    "name": "266"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Fletcher Bay",
+    "description": "",
+    "null_safe_name": "389",
+    "name": "389"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Poulsbo/Bainbridge",
+    "description": "",
+    "null_safe_name": "390",
+    "name": "390"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Kingston/Bainbridge",
+    "description": "",
+    "null_safe_name": "391",
+    "name": "391"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Manzanita",
+    "description": "",
+    "null_safe_name": "393",
+    "name": "393"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Agate Point",
+    "description": "",
+    "null_safe_name": "394",
+    "name": "394"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Battle Point",
+    "description": "",
+    "null_safe_name": "395",
+    "name": "395"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Sunrise",
+    "description": "",
+    "null_safe_name": "396",
+    "name": "396"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Crystal Springs",
+    "description": "",
+    "null_safe_name": "397",
+    "name": "397"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Fort Ward",
+    "description": "",
+    "null_safe_name": "398",
+    "name": "398"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Bill Point",
+    "description": "",
+    "null_safe_name": "399",
+    "name": "399"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Annapolis",
+    "description": "",
+    "null_safe_name": "181",
+    "name": "181"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Harper Shuttle",
+    "description": "",
+    "null_safe_name": "184",
+    "name": "184"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Mullenix",
+    "description": "",
+    "null_safe_name": "185",
+    "name": "185"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Southworth",
+    "description": "",
+    "null_safe_name": "186",
+    "name": "186"
+  },
+  {
+    "route_id": "20",
+    "long_name": "BI Ride",
+    "description": "",
+    "null_safe_name": "800",
+    "name": "800"
+  },
+  {
+    "route_id": "20",
+    "long_name": "SK Ride",
+    "description": "",
+    "null_safe_name": "801",
+    "name": "801"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Kingston Ride",
+    "description": "",
+    "null_safe_name": "803",
+    "name": "803"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Sunday On-Demand",
+    "description": "",
+    "null_safe_name": "807",
+    "name": "807"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Task",
+    "description": "",
+    "null_safe_name": "TA034",
+    "name": "TA034"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Burley Worker/Driver",
+    "description": "",
+    "null_safe_name": "600",
+    "name": "600"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Tracyton Worker/Driver",
+    "description": "",
+    "null_safe_name": "602",
+    "name": "602"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Horseshoe Lake Worker/Driver",
+    "description": "",
+    "null_safe_name": "604",
+    "name": "604"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Illahee Worker/Driver",
+    "description": "",
+    "null_safe_name": "605",
+    "name": "605"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Long Lake Days Worker/Driver",
+    "description": "",
+    "null_safe_name": "607",
+    "name": "607"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Manchester Worker/Driver",
+    "description": "",
+    "null_safe_name": "608",
+    "name": "608"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Phillips/Bielmeier Worker/Driver",
+    "description": "",
+    "null_safe_name": "612",
+    "name": "612"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Port Gamble Worker/Driver",
+    "description": "",
+    "null_safe_name": "614",
+    "name": "614"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Salmonberry Worker/Driver",
+    "description": "",
+    "null_safe_name": "616",
+    "name": "616"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Southworth Worker/Driver",
+    "description": "",
+    "null_safe_name": "618",
+    "name": "618"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Suquamish Worker/Driver",
+    "description": "",
+    "null_safe_name": "619",
+    "name": "619"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Winslow Worker/Driver",
+    "description": "",
+    "null_safe_name": "620",
+    "name": "620"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Port Orchard Foot Ferry",
+    "description": "",
+    "null_safe_name": "500",
+    "name": "500"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Woodmere Worker/Driver",
+    "description": "",
+    "null_safe_name": "621",
+    "name": "621"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Annapolis Foot Ferry",
+    "description": "",
+    "null_safe_name": "501",
+    "name": "501"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Central Valley Loop Worker/Driver",
+    "description": "",
+    "null_safe_name": "623",
+    "name": "623"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Fairgrounds Worker/Driver",
+    "description": "",
+    "null_safe_name": "624",
+    "name": "624"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Sidney Woods Worker/Driver",
+    "description": "",
+    "null_safe_name": "625",
+    "name": "625"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Early North Worker/Driver",
+    "description": "",
+    "null_safe_name": "626",
+    "name": "626"
+  },
+  {
+    "route_id": "20",
+    "long_name": "SK/Bangor Worker/Driver",
+    "description": "",
+    "null_safe_name": "627",
+    "name": "627"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Olalla Worker/Driver",
+    "description": "",
+    "null_safe_name": "630",
+    "name": "630"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Chico Worker/Driver",
+    "description": "",
+    "null_safe_name": "631",
+    "name": "631"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Viking Express Worker/Driver",
+    "description": "",
+    "null_safe_name": "633",
+    "name": "633"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Early South Worker/Driver",
+    "description": "",
+    "null_safe_name": "635",
+    "name": "635"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Parkwood-Ponderosa Worker/Driver",
+    "description": "",
+    "null_safe_name": "636",
+    "name": "636"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Sunnyslope Worker/Driver",
+    "description": "",
+    "null_safe_name": "637",
+    "name": "637"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Seabeck/Camp Union Worker/Driver",
+    "description": "",
+    "null_safe_name": "638",
+    "name": "638"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Bremerton to Seattle Fast Ferry",
+    "description": "",
+    "null_safe_name": "400",
+    "name": "400"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Kingston to Seattle Fast Ferry",
+    "description": "",
+    "null_safe_name": "401",
+    "name": "401"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Southworth to Seattle Fast Ferry",
+    "description": "",
+    "null_safe_name": "402",
+    "name": "402"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Seattle to Bremerton Fast Ferry",
+    "description": "",
+    "null_safe_name": "403",
+    "name": "403"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Seattle to Kingston Fast Ferry",
+    "description": "",
+    "null_safe_name": "404",
+    "name": "404"
+  },
+  {
+    "route_id": "20",
+    "long_name": "Seattle to Southworth Fast Ferry",
+    "description": "",
+    "null_safe_name": "405",
+    "name": "405"
+  }
+]

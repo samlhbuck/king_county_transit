@@ -1,0 +1,50 @@
+[
+  {
+    "id": "1",
+    "name": "Metro Transit"
+  },
+  {
+    "id": "23",
+    "name": "City of Seattle"
+  },
+  {
+    "id": "3",
+    "name": "Pierce Transit"
+  },
+  {
+    "id": "6289",
+    "name": "Solid Ground EZ Loop"
+  },
+  {
+    "id": "29",
+    "name": "Community Transit"
+  },
+  {
+    "id": "19",
+    "name": "Intercity Transit"
+  },
+  {
+    "id": "95",
+    "name": "Washington State Ferries"
+  },
+  {
+    "id": "51",
+    "name": "Amtrak"
+  },
+  {
+    "id": "40",
+    "name": "Sound Transit"
+  },
+  {
+    "id": "96",
+    "name": "Seattle Center Monorail"
+  },
+  {
+    "id": "97",
+    "name": "Everett Transit"
+  },
+  {
+    "id": "20",
+    "name": "Kitsap Transit"
+  }
+]
