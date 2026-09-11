@@ -89,7 +89,8 @@ def fetch_and_save_permits(refresh = False):
 
     missing_columns = [col for col in PERMIT_COLUMNS if col not in permits.columns]
 
-    print(f"Missing columns: {missing_columns}")
+    if missing_columns.count > 0:
+        print(f"Missing columns: {missing_columns}")
 
     selected_columns = [col for col in PERMIT_COLUMNS if col in permits.columns]
     permits_analysis = permits[selected_columns].copy()
@@ -231,7 +232,7 @@ permits_df["EstProjectCostNumeric"] = pd.to_numeric(
     errors="coerce",
 )
 
-print(
+os.write(
     permits_df["EstProjectCostNumeric"]
     .describe(percentiles=[0.25, 0.5, 0.75, 0.9, 0.95, 0.99])
 )
