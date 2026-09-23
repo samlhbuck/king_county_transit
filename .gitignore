@@ -8,3 +8,5 @@ _site/
 .DS_Store
 data/raw/*
 data/processed/*
+data/raw/seattle_streets.geojson
+data/raw/seattle_streets.geojson.tmp

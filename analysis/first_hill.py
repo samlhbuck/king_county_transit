@@ -8,10 +8,42 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import Patch
 import geopandas as gpd
+import src.basemap as basemap
+
+
 
 def plot_assignment_map(results):
 
-    MAP_CRS = "EPSG:3857"
+    MAP_CRS = "EPSG:2285"
+
+    streets = (
+        basemap.load_seattle_streets()
+        .to_crs(MAP_CRS)
+    )
+
+    map_area = gpd.GeoDataFrame(
+        geometry=[
+            results["corridor_geometry"].buffer(800)
+        ],
+        crs=MAP_CRS,
+    )
+
+    streets = gpd.clip(streets, map_area)
+
+    arterial_description = (
+        streets["ARTDESCRIPT"]
+        .fillna("")
+        .astype("string")
+    )
+
+    freeway_mask = arterial_description.str.contains(
+        "FREEWAY",
+        case=False,
+    )
+
+    freeways = streets.loc[freeway_mask]
+    ordinary_streets = streets.loc[~freeway_mask]
+
 
     projects = (
         results["projects_with_nearest_stop"]
@@ -69,6 +101,20 @@ def plot_assignment_map(results):
 
     fig, axis = plt.subplots(figsize=(10, 12))
 
+    ordinary_streets.plot(
+        ax=axis,
+        color="#d6d6d6",
+        linewidth=0.35,
+        zorder=0,
+    )
+
+    freeways.plot(
+        ax=axis,
+        color="#777777",
+        linewidth=2,
+        alpha=0.75,
+        zorder=2,
+    )
     corridor.plot(
         ax=axis,
         color="#eeeeee",
@@ -345,3 +391,140 @@ plot_stop_development(
 )
 
 plot_assignment_map(results)
+
+projects = results["projects_with_nearest_stop"].copy()
+
+stop_names = (
+    results["physical_stops_gdf"]
+    [["id", "name"]]
+    .rename(
+        columns={
+            "id": "NearestStopId",
+            "name": "NearestStopName",
+        }
+    )
+)
+
+projects = projects.merge(
+    stop_names,
+    on="NearestStopId",
+    how="left",
+)
+
+projects["ProximityBand"] = pd.cut(
+    projects["NearestStopDistanceFeet"],
+    bins=[0, 660, 1320, 1760],
+    labels=[
+        "Immediate: 0–⅛ mile",
+        "Close: ⅛–¼ mile",
+        "Outer: ¼–⅓ mile",
+    ],
+    include_lowest=True,
+)
+
+distance_audit = (
+    projects[
+        [
+            "OriginalAddress1",
+            "NearestStopName",
+            "NearestStopDistanceFeet",
+            "ProximityBand",
+            "HousingUnitsAdded",
+            "EstProjectCostNumeric",
+        ]
+    ]
+    .sort_values("NearestStopDistanceFeet")
+    .head(25)
+)
+
+print(
+    distance_audit.to_string(
+        index=False,
+        formatters={
+            "NearestStopDistanceFeet": "{:,.0f}".format,
+            "EstProjectCostNumeric": "${:,.0f}".format,
+        },
+    )
+)
+proximity_summary = (
+    projects
+    .groupby(
+        "ProximityBand",
+        observed=False,
+    )
+    .agg(
+        projects=("IssuedDate", "size"),
+        estimated_value=(
+            "EstProjectCostNumeric",
+            "sum",
+        ),
+        gross_units_added=(
+            "HousingUnitsAdded",
+            "sum",
+        ),
+        units_removed=(
+            "HousingUnitsRemoved",
+            "sum",
+        ),
+        net_units=(
+            "HousingUnitsNet",
+            "sum",
+        ),
+    )
+    .reset_index()
+)
+
+proximity_summary["estimated_value_millions"] = (
+    proximity_summary["estimated_value"]
+    / 1_000_000
+)
+
+proximity_summary["share_of_units_added_pct"] = (
+    proximity_summary["gross_units_added"]
+    / proximity_summary["gross_units_added"].sum()
+    * 100
+)
+
+print(
+    proximity_summary[
+        [
+            "ProximityBand",
+            "projects",
+            "estimated_value_millions",
+            "gross_units_added",
+            "net_units",
+            "share_of_units_added_pct",
+        ]
+    ].to_string(
+        index=False,
+        formatters={
+            "estimated_value_millions": "{:,.1f}".format,
+            "gross_units_added": "{:,.0f}".format,
+            "net_units": "{:,.0f}".format,
+            "share_of_units_added_pct": "{:.1f}%".format,
+        },
+    )
+)
+print(
+    results["stop_profiles_gdf"][
+        [
+            "route_position",
+            "StopName",
+            "development_projects",
+            "estimated_value",
+            "gross_units_added",
+            "net_units",
+            "median_distance_feet",
+            "ImmediateHousingShare",
+        ]
+    ].to_string(
+        index=False,
+        formatters={
+            "estimated_value": "${:,.0f}".format,
+            "gross_units_added": "{:,.0f}".format,
+            "net_units": "{:,.0f}".format,
+            "median_distance_feet": "{:,.0f}".format,
+            "ImmediateHousingShare": "{:.1%}".format,
+        },
+    )
+)
