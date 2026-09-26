@@ -22,6 +22,13 @@ slice: map clarity and fluid exploration (priorities 1–2 below).
 2. **Recalibrate project-point housing colors.** Replace the current housing-added
    bands with **1–5, 6–20, 21–50, 51–150 and 151+ units**. Keep distinct treatments
    for zero-unit projects and projects whose unit count is not recorded.
+3. **Fix the project lens at wide zoom levels.** Review the project display and
+   selected-project treatment when the map is zoomed out; it currently looks
+   visually awkward and should remain legible without overwhelming the route.
+4. **Make stop markers easier to see and select.** Increase their visual contrast
+   and pointer target. Test a distinct color, larger visible marker, different
+   shape or a combination while keeping stops distinguishable from project points.
+   The clickable target should be comfortably larger than the visible symbol.
 
 Time-budget exploration: 30 minutes, one hour or two hours, one-way or round trip,
 from a selected stop and departure date/time. Show farthest reachable stops in each
