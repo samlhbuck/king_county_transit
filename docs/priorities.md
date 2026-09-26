@@ -13,6 +13,16 @@ slice: map clarity and fluid exploration (priorities 1–2 below).
 | 5 | Development application/issuance/completion/occupancy timelines; explicit date basis and clickable years; ridership context | Deferred; local ridership cache audit recorded below |
 | 6 | Tree canopy, scenic/elevation views, transit travel-time variability and traffic context | Deferred |
 
+## Near-term refinement deck
+
+1. **Focus a selected stop automatically.** Selecting a stop from the sidebar,
+   including after noticing a high housing total, should zoom and center the map
+   on that stop. The current highlight without automatic focus is insufficient;
+   the separate **Focus selected stop** button should not be required for this path.
+2. **Recalibrate project-point housing colors.** Replace the current housing-added
+   bands with **1–5, 6–20, 21–50, 51–150 and 151+ units**. Keep distinct treatments
+   for zero-unit projects and projects whose unit count is not recorded.
+
 Time-budget exploration: 30 minutes, one hour or two hours, one-way or round trip,
 from a selected stop and departure date/time. Show farthest reachable stops in each
 actual destination direction; uptown/downtown can supplement where meaningful.
