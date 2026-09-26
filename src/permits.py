@@ -11,9 +11,9 @@ PERMITS_URL = (
     "https://cos-data.seattle.gov/api/v3/views/"
     "76t5-zqzr/export.csv?accessType=DOWNLOAD"
 )
-PERMITS_FILE = Path("data/raw/building_permits.csv")
-PERMITS_ANALYSIS_FILE = Path("data/processed/building_permits_selected_columns.csv")
-DEVELOPMENT_PERMITS_FILE = Path("data/processed/development_permits.csv")
+PERMITS_FILE = PROJECT_ROOT / "data/raw/building_permits.csv"
+PERMITS_ANALYSIS_FILE = PROJECT_ROOT / "data/processed/building_permits_selected_columns.csv"
+DEVELOPMENT_PERMITS_FILE = PROJECT_ROOT / "data/processed/development_permits.csv"
 PERMIT_COLUMNS = [
     # Identifiers and project relationships
     "PermitNum",
@@ -204,6 +204,7 @@ def save_development_permits(output_path=DEVELOPMENT_PERMITS_FILE):
     permits_df = load_permits(refresh=False)
     prepared_permits_df = prepare_permits(permits_df)
     development_permits_df = select_development_permits(prepared_permits_df)
+    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
     development_permits_df.to_csv(
         output_path,
         index=False,

@@ -1,0 +1,42 @@
+{
+  "1_102745": {
+    "name": "RapidRide G Line",
+    "service_start_date": "2024-09-14",
+    "source_url": "https://content.govdelivery.com/accounts/WAKING/bulletins/3b30a57",
+    "source_title": "King County Metro September 2024 service change",
+    "checked_on": "2026-09-23",
+    "note": "Start of RapidRide G Line service; predecessor routes are not included."
+  },
+  "23_102638": {
+    "name": "First Hill Streetcar",
+    "service_start_date": "2016-01-23",
+    "source_url": "https://www.seattle.gov/documents/Departments/SDOT/About/DocumentLibrary/Reports/Streetcar_Ops_Report-JUL-2019-FINAL.pdf",
+    "source_title": "SDOT 2019 Streetcar Operations Report",
+    "checked_on": "2026-09-23",
+    "note": "First passenger service (soft launch), before the February grand opening."
+  },
+  "23_100340": {
+    "name": "South Lake Union Streetcar",
+    "service_start_date": "2007-12-12",
+    "source_url": "https://sdotblog.seattle.gov/2012/12/12/seattle-streetcar-celebrates-five-years-of-service-to-south-lake-union/",
+    "source_title": "SDOT: Seattle Streetcar celebrates five years of service",
+    "checked_on": "2026-09-23",
+    "note": "Start of South Lake Union Streetcar passenger service."
+  },
+  "40_100479": {
+    "name": "Link 1 Line",
+    "service_start_date": "2009-07-18",
+    "source_url": "https://www.soundtransit.org/get-to-know-us/news-events/news-releases/link-light-rail-launches-new-era-mobility-central-puget",
+    "source_title": "Sound Transit opening announcement",
+    "checked_on": "2026-09-24",
+    "note": "Original Central Link opening, Westlake\u2013Tukwila International Boulevard. Later extensions opened separately; this filter uses the current route geometry."
+  },
+  "40_2LINE": {
+    "name": "Link 2 Line",
+    "service_start_date": "2024-04-27",
+    "source_url": "https://www.soundtransit.org/get-to-know-us/news-events/news-releases/light-rail-opens-eastside",
+    "source_title": "Sound Transit opening announcement",
+    "checked_on": "2026-09-24",
+    "note": "Initial Eastside segment, South Bellevue\u2013Redmond Technology. Later extensions opened separately; this filter uses the current route geometry."
+  }
+}

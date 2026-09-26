@@ -287,244 +287,248 @@ START_DATE = pd.Timestamp("2004-01-01")
 END_DATE = pd.Timestamp("2026-01-01")
 FREQUENCY = "QS"  # Quarterly frequency
 
-results = tod.analyze_route(
-    route_id=ROUTE_ID,
-    catchment_distance_feet=CATCHMENT_DISTANCE_FEET,
-    start_date=START_DATE,
-    end_date=END_DATE,
-    frequency=FREQUENCY,
-)
-
-print("\n--- Route analysis review ---")
-print("Route:", results["route_id"])
-print("Stops:", len(results["stops_gdf"]))
-print("Stop groupings:", len(results["stop_groupings"]))
-print("Polylines:", len(results["route_polylines"]))
-
-print(
-    "Corridor area:",
-    f"{results['corridor_geometry'].area / 5280**2:.2f}",
-    "square miles",
-)
-
-print(
-    "Permit records in corridor:",
-    len(results["corridor_permits_gdf"]),
-)
-
-print(
-    "Consolidated projects:",
-    len(results["consolidated_projects_gdf"]),
-)
-
-print(
-    "Nearest-stop CRS:",
-    results["projects_with_nearest_stop"].crs,
-)
-
-print(
-    "Projects without a nearest stop:",
-    results["projects_with_nearest_stop"][
-        "NearestStopId"
-    ].isna().sum(),
-)
-
-print("\nPeriod summary:")
-print(results["period_summary"].to_string())
-
-assert (
-    results["corridor_permits_gdf"].crs.to_epsg() == 2285
-)
-
-assert (
-    results["projects_with_nearest_stop"].crs.to_epsg() == 2285
-)
-
-
-for grouping in results["stop_groupings"]:
-    print(
-        "\nGrouping:",
-        grouping.get("type"),
-        "ordered:",
-        grouping.get("ordered"),
+def main():
+    results = tod.analyze_route(
+        route_id=ROUTE_ID,
+        catchment_distance_feet=CATCHMENT_DISTANCE_FEET,
+        start_date=START_DATE,
+        end_date=END_DATE,
+        frequency=FREQUENCY,
     )
 
-    for stop_group in grouping.get("stopGroups", []):
+    print("\n--- Route analysis review ---")
+    print("Route:", results["route_id"])
+    print("Stops:", len(results["stops_gdf"]))
+    print("Stop groupings:", len(results["stop_groupings"]))
+    print("Polylines:", len(results["route_polylines"]))
+
+    print(
+        "Corridor area:",
+        f"{results['corridor_geometry'].area / 5280**2:.2f}",
+        "square miles",
+    )
+
+    print(
+        "Permit records in corridor:",
+        len(results["corridor_permits_gdf"]),
+    )
+
+    print(
+        "Consolidated projects:",
+        len(results["consolidated_projects_gdf"]),
+    )
+
+    print(
+        "Nearest-stop CRS:",
+        results["projects_with_nearest_stop"].crs,
+    )
+
+    print(
+        "Projects without a nearest stop:",
+        results["projects_with_nearest_stop"][
+            "NearestStopId"
+        ].isna().sum(),
+    )
+
+    print("\nPeriod summary:")
+    print(results["period_summary"].to_string())
+
+    assert (
+        results["corridor_permits_gdf"].crs.to_epsg() == 2285
+    )
+
+    assert (
+        results["projects_with_nearest_stop"].crs.to_epsg() == 2285
+    )
+
+
+    for grouping in results["stop_groupings"]:
         print(
-            stop_group.get("id"),
-            stop_group.get("name", {}).get("name"),
-            stop_group.get("stopIds"),
+            "\nGrouping:",
+            grouping.get("type"),
+            "ordered:",
+            grouping.get("ordered"),
         )
 
-print(results["period_summary"])
-print(results["projects_with_nearest_stop"].head())
+        for stop_group in grouping.get("stopGroups", []):
+            print(
+                stop_group.get("id"),
+                stop_group.get("name", {}).get("name"),
+                stop_group.get("stopIds"),
+            )
 
-physical_stops_gdf = results["physical_stops_gdf"].copy()
+    print(results["period_summary"])
+    print(results["projects_with_nearest_stop"].head())
 
-print(
-    physical_stops_gdf[
-        [
-            "route_position",
-            "name",
-            "oba_stop_ids",
-            "lat",
-            "lon",
-        ]
-    ].to_string(index=False)
-)
+    physical_stops_gdf = results["physical_stops_gdf"].copy()
 
-plot_stop_development(
-    results["stop_period_summary"],
-    results["physical_stops_gdf"],
-    metric="units_added",
-    title= "Gross housing units added by nearest streetcar stop",
-    ylabel="Gross housing units added",
-)
-
-plot_stop_development(
-    results["stop_period_summary"],
-    results["physical_stops_gdf"],
-    metric="estimated_value",
-    title="Estimated project value by nearest streetcar stop",
-    ylabel="Estimated permitted value ($ millions)",
-    scale=1_000_000,
-)
-
-plot_assignment_map(results)
-
-projects = results["projects_with_nearest_stop"].copy()
-
-stop_names = (
-    results["physical_stops_gdf"]
-    [["id", "name"]]
-    .rename(
-        columns={
-            "id": "NearestStopId",
-            "name": "NearestStopName",
-        }
+    print(
+        physical_stops_gdf[
+            [
+                "route_position",
+                "name",
+                "oba_stop_ids",
+                "lat",
+                "lon",
+            ]
+        ].to_string(index=False)
     )
-)
 
-projects = projects.merge(
-    stop_names,
-    on="NearestStopId",
-    how="left",
-)
+    plot_stop_development(
+        results["stop_period_summary"],
+        results["physical_stops_gdf"],
+        metric="units_added",
+        title= "Gross housing units added by nearest streetcar stop",
+        ylabel="Gross housing units added",
+    )
 
-projects["ProximityBand"] = pd.cut(
-    projects["NearestStopDistanceFeet"],
-    bins=[0, 660, 1320, 1760],
-    labels=[
-        "Immediate: 0–⅛ mile",
-        "Close: ⅛–¼ mile",
-        "Outer: ¼–⅓ mile",
-    ],
-    include_lowest=True,
-)
+    plot_stop_development(
+        results["stop_period_summary"],
+        results["physical_stops_gdf"],
+        metric="estimated_value",
+        title="Estimated project value by nearest streetcar stop",
+        ylabel="Estimated permitted value ($ millions)",
+        scale=1_000_000,
+    )
 
-distance_audit = (
-    projects[
-        [
-            "OriginalAddress1",
-            "NearestStopName",
-            "NearestStopDistanceFeet",
+    plot_assignment_map(results)
+
+    projects = results["projects_with_nearest_stop"].copy()
+
+    stop_names = (
+        results["physical_stops_gdf"]
+        [["id", "name"]]
+        .rename(
+            columns={
+                "id": "NearestStopId",
+                "name": "NearestStopName",
+            }
+        )
+    )
+
+    projects = projects.merge(
+        stop_names,
+        on="NearestStopId",
+        how="left",
+    )
+
+    projects["ProximityBand"] = pd.cut(
+        projects["NearestStopDistanceFeet"],
+        bins=[0, 660, 1320, 1760],
+        labels=[
+            "Immediate: 0–⅛ mile",
+            "Close: ⅛–¼ mile",
+            "Outer: ¼–⅓ mile",
+        ],
+        include_lowest=True,
+    )
+
+    distance_audit = (
+        projects[
+            [
+                "OriginalAddress1",
+                "NearestStopName",
+                "NearestStopDistanceFeet",
+                "ProximityBand",
+                "HousingUnitsAdded",
+                "EstProjectCostNumeric",
+            ]
+        ]
+        .sort_values("NearestStopDistanceFeet")
+        .head(25)
+    )
+
+    print(
+        distance_audit.to_string(
+            index=False,
+            formatters={
+                "NearestStopDistanceFeet": "{:,.0f}".format,
+                "EstProjectCostNumeric": "${:,.0f}".format,
+            },
+        )
+    )
+    proximity_summary = (
+        projects
+        .groupby(
             "ProximityBand",
-            "HousingUnitsAdded",
-            "EstProjectCostNumeric",
-        ]
-    ]
-    .sort_values("NearestStopDistanceFeet")
-    .head(25)
-)
+            observed=False,
+        )
+        .agg(
+            projects=("IssuedDate", "size"),
+            estimated_value=(
+                "EstProjectCostNumeric",
+                "sum",
+            ),
+            gross_units_added=(
+                "HousingUnitsAdded",
+                "sum",
+            ),
+            units_removed=(
+                "HousingUnitsRemoved",
+                "sum",
+            ),
+            net_units=(
+                "HousingUnitsNet",
+                "sum",
+            ),
+        )
+        .reset_index()
+    )
 
-print(
-    distance_audit.to_string(
-        index=False,
-        formatters={
-            "NearestStopDistanceFeet": "{:,.0f}".format,
-            "EstProjectCostNumeric": "${:,.0f}".format,
-        },
+    proximity_summary["estimated_value_millions"] = (
+        proximity_summary["estimated_value"]
+        / 1_000_000
     )
-)
-proximity_summary = (
-    projects
-    .groupby(
-        "ProximityBand",
-        observed=False,
-    )
-    .agg(
-        projects=("IssuedDate", "size"),
-        estimated_value=(
-            "EstProjectCostNumeric",
-            "sum",
-        ),
-        gross_units_added=(
-            "HousingUnitsAdded",
-            "sum",
-        ),
-        units_removed=(
-            "HousingUnitsRemoved",
-            "sum",
-        ),
-        net_units=(
-            "HousingUnitsNet",
-            "sum",
-        ),
-    )
-    .reset_index()
-)
 
-proximity_summary["estimated_value_millions"] = (
-    proximity_summary["estimated_value"]
-    / 1_000_000
-)
-
-proximity_summary["share_of_units_added_pct"] = (
-    proximity_summary["gross_units_added"]
-    / proximity_summary["gross_units_added"].sum()
-    * 100
-)
-
-print(
-    proximity_summary[
-        [
-            "ProximityBand",
-            "projects",
-            "estimated_value_millions",
-            "gross_units_added",
-            "net_units",
-            "share_of_units_added_pct",
-        ]
-    ].to_string(
-        index=False,
-        formatters={
-            "estimated_value_millions": "{:,.1f}".format,
-            "gross_units_added": "{:,.0f}".format,
-            "net_units": "{:,.0f}".format,
-            "share_of_units_added_pct": "{:.1f}%".format,
-        },
+    proximity_summary["share_of_units_added_pct"] = (
+        proximity_summary["gross_units_added"]
+        / proximity_summary["gross_units_added"].sum()
+        * 100
     )
-)
-print(
-    results["stop_profiles_gdf"][
-        [
-            "route_position",
-            "StopName",
-            "development_projects",
-            "estimated_value",
-            "gross_units_added",
-            "net_units",
-            "median_distance_feet",
-            "ImmediateHousingShare",
-        ]
-    ].to_string(
-        index=False,
-        formatters={
-            "estimated_value": "${:,.0f}".format,
-            "gross_units_added": "{:,.0f}".format,
-            "net_units": "{:,.0f}".format,
-            "median_distance_feet": "{:,.0f}".format,
-            "ImmediateHousingShare": "{:.1%}".format,
-        },
+
+    print(
+        proximity_summary[
+            [
+                "ProximityBand",
+                "projects",
+                "estimated_value_millions",
+                "gross_units_added",
+                "net_units",
+                "share_of_units_added_pct",
+            ]
+        ].to_string(
+            index=False,
+            formatters={
+                "estimated_value_millions": "{:,.1f}".format,
+                "gross_units_added": "{:,.0f}".format,
+                "net_units": "{:,.0f}".format,
+                "share_of_units_added_pct": "{:.1f}%".format,
+            },
+        )
     )
-)
+    print(
+        results["stop_profiles_gdf"][
+            [
+                "route_position",
+                "StopName",
+                "development_projects",
+                "estimated_value",
+                "gross_units_added",
+                "net_units",
+                "median_distance_feet",
+                "ImmediateHousingShare",
+            ]
+        ].to_string(
+            index=False,
+            formatters={
+                "estimated_value": "${:,.0f}".format,
+                "gross_units_added": "{:,.0f}".format,
+                "net_units": "{:,.0f}".format,
+                "median_distance_feet": "{:,.0f}".format,
+                "ImmediateHousingShare": "{:.1%}".format,
+            },
+        )
+    )
+
+if __name__ == "__main__":
+    main()

@@ -6,6 +6,7 @@ __pycache__/
 .quarto/
 _site/
 .DS_Store
+config/
 data/raw/*
 data/processed/*
 data/raw/seattle_streets.geojson

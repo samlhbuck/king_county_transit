@@ -1,6 +1,9 @@
+import re
+
 import pandas as pd
 import geopandas as gpd
 from src import oba, permits
+from src.project_metadata import reconcile_support_permits, joined, use_hint
 import polyline
 from shapely.geometry import LineString
 
@@ -59,6 +62,7 @@ def consolidate_projects(corridor_permits_gdf):
     """
     Consolidate permits into unique projects based on address and description.
     """
+    corridor_permits_gdf = reconcile_support_permits(corridor_permits_gdf)
     corridor_permits_gdf["IsDependentPermit"] = (
         corridor_permits_gdf["ParentPermitNum"].notna()
     )
@@ -103,6 +107,12 @@ def consolidate_projects(corridor_permits_gdf):
         .agg({
             "OriginalAddress1": "first",
             "Description": "first",
+            "StatusCurrent": joined,
+            "SourcePermitNumbers": joined,
+            "ReconciliationNote": lambda values: " ".join(v for v in values if v),
+            "SupportingPermitValue": "sum",
+            "HousingCategory": joined,
+            "Zoning": joined,
             "AppliedDate": "min",
             "IssuedDate": "min",
             "CompletedDate": "max",
@@ -121,6 +131,7 @@ def consolidate_projects(corridor_permits_gdf):
         crs="EPSG:4326",
     )
 
+    consolidated_projects_gdf["UseHint"] = consolidated_projects_gdf.Description.map(use_hint)
     consolidated_projects_gdf["HousingUnitsNet"] = (
         consolidated_projects_gdf["HousingUnitsAdded"].fillna(0)
         - consolidated_projects_gdf["HousingUnitsRemoved"].fillna(0)
@@ -312,54 +323,140 @@ def summarize_projects_by_stop(
         how="left",
     )
 
-def make_physical_stops_gdf(route_data):
-    direction_grouping = next(
-        grouping
-        for grouping in route_data["stop_groupings"]
-        if grouping.get("type") == "direction"
+def make_physical_stops_gdf(route_data, max_pair_distance_feet=500,
+                            proximity_pair_distance_feet=250):
+    """Conservatively group nearby platforms; retain every unmatched stop.
+
+    Name-based matches do not depend on direction groups: some feeds put both
+    platforms in one group. Abbreviated street names may omit a road type or
+    compass qualifier. Different names can pair within 250 feet with opposite
+    direction evidence. Every pair in a cluster must qualify, preventing chains
+    from merging adjacent stations. All source names are retained in labels.
+    Display order follows the first direction, then unseen stops in other
+    directions, then ungrouped stops. Branches need not form one linear path.
+    """
+    if max_pair_distance_feet < 0 or proximity_pair_distance_feet < 0:
+        raise ValueError("Stop pairing distance must be nonnegative.")
+    lookup = {stop["id"]: stop for stop in route_data["stops"]}
+    if not lookup:
+        raise ValueError("This route has no stops to display.")
+
+    memberships = {stop_id: set() for stop_id in lookup}
+    ordered_ids = []
+    for grouping_index, grouping in enumerate(route_data.get("stop_groupings", [])):
+        if grouping.get("type") != "direction":
+            continue
+        for group_index, group in enumerate(grouping.get("stopGroups", [])):
+            for stop_id in group.get("stopIds", []):
+                if stop_id in lookup:
+                    memberships[stop_id].add((grouping_index, group_index))
+                    ordered_ids.append(stop_id)
+    ordered_ids = list(dict.fromkeys(ordered_ids + list(lookup)))
+    projected = make_stops_gdf([lookup[i] for i in ordered_ids]).to_crs(ANALYSIS_CRS)
+    points = dict(zip(ordered_ids, projected.geometry))
+
+    def name_key(stop):
+        name = re.sub(r"\bAND\b|@", "&", (stop.get("name") or "").upper())
+        parts = [re.sub(r"[^A-Z0-9]+", " ", part).strip() for part in name.split("&")]
+        return tuple(sorted(part for part in parts if part))
+
+    compass = {"N", "S", "E", "W", "NE", "NW", "SE", "SW"}
+    street_types = {"ST", "AVE", "WAY", "RD", "BLVD", "DR", "PL", "CT", "LN"}
+    aliases = {"STREET": "ST", "AVENUE": "AVE", "ROAD": "RD", "BOULEVARD": "BLVD",
+               "DRIVE": "DR", "PLACE": "PL", "COURT": "CT", "LANE": "LN",
+               "NORTH": "N", "SOUTH": "S", "EAST": "E", "WEST": "W",
+               "NORTHEAST": "NE", "NORTHWEST": "NW", "SOUTHEAST": "SE", "SOUTHWEST": "SW"}
+    opposite = {"N": "S", "S": "N", "E": "W", "W": "E",
+                "NE": "SW", "SW": "NE", "NW": "SE", "SE": "NW"}
+
+    def street_key(part):
+        tokens = [aliases.get(token, token) for token in part.split()]
+        return (tuple(t for t in tokens if t not in compass | street_types),
+                frozenset(t for t in tokens if t in compass),
+                frozenset(t for t in tokens if t in street_types))
+
+    def equivalent_street(a, b):
+        core_a, direction_a, type_a = street_key(a)
+        core_b, direction_b, type_b = street_key(b)
+        # Missing qualifiers are allowed; explicit conflicting ones are not.
+        return bool(core_a) and core_a == core_b and (
+            not direction_a or not direction_b or direction_a == direction_b
+        ) and (not type_a or not type_b or type_a == type_b)
+
+    def similar_intersection(left, right):
+        a, b = name_key(left), name_key(right)
+        if len(a) != 2 or len(b) != 2:
+            return False
+        return any(equivalent_street(a[0], pair[0]) and equivalent_street(a[1], pair[1])
+                   for pair in (b, b[::-1]))
+
+    def compatible(a, b):
+        distance = points[a].distance(points[b])
+        if distance > max_pair_distance_feet:
+            return False
+        left, right = lookup[a], lookup[b]
+        parent = left.get("parent")
+        if parent and parent == right.get("parent"):
+            return True
+        if name_key(left) and name_key(left) == name_key(right):
+            return True
+        if similar_intersection(left, right):
+            return True
+        if distance > proximity_pair_distance_feet:
+            return False
+        da = aliases.get((left.get("direction") or "").strip().upper(),
+                         (left.get("direction") or "").strip().upper())
+        db = aliases.get((right.get("direction") or "").strip().upper(),
+                         (right.get("direction") or "").strip().upper())
+        if da in opposite and db in opposite:
+            return opposite[da] == db
+        # Fallback when compass metadata is absent: distinct direction patterns.
+        return bool(memberships[a] and memberships[b]
+                    and not memberships[a].intersection(memberships[b]))
+
+    def combined_name(members):
+        names = list(dict.fromkeys(stop.get("name") or stop["id"] for stop in members))
+        if len(names) == 1:
+            return names[0]
+        parts = [re.split(r"\s*(?:&|@|\bAND\b)\s*", name, flags=re.IGNORECASE)
+                 for name in names]
+        if all(len(part) == 2 for part in parts) and len({part[0] for part in parts}) == 1:
+            return parts[0][0] + " & " + " / ".join(dict.fromkeys(part[1] for part in parts))
+        return " / ".join(names)
+
+    # Closest eligible matches win; ties follow source route order. No stop is
+    # dropped, including branches, loops, shared terminals and missing groups.
+    candidates = sorted(
+        (points[a].distance(points[b]), i, j)
+        for i, a in enumerate(ordered_ids)
+        for j, b in enumerate(ordered_ids[i + 1:], start=i + 1)
+        if compatible(a, b)
     )
-
-    stop_groups = direction_grouping["stopGroups"]
-
-    direction_a_ids = stop_groups[0]["stopIds"]
-    direction_b_ids = list(
-        reversed(stop_groups[1]["stopIds"])
-    )
-
-    if len(direction_a_ids) != len(direction_b_ids):
-        raise ValueError(
-            "Directional stop lists have different lengths."
-        )
-
-    stop_lookup = {
-        stop["id"]: stop
-        for stop in route_data["stops"]
-    }
+    clusters = {i: [stop_id] for i, stop_id in enumerate(ordered_ids)}
+    owner = {stop_id: i for i, stop_id in enumerate(ordered_ids)}
+    for _, i, j in candidates:
+        left, right = owner[ordered_ids[i]], owner[ordered_ids[j]]
+        if left == right:
+            continue
+        if all(compatible(a, b) for a in clusters[left] for b in clusters[right]):
+            keep, remove = min(left, right), max(left, right)
+            clusters[keep].extend(clusters.pop(remove))
+            for stop_id in clusters[keep]:
+                owner[stop_id] = keep
 
     physical_stops = []
-
-    for position, (stop_a_id, stop_b_id) in enumerate(
-        zip(direction_a_ids, direction_b_ids),
-        start=1,
-    ):
-        stop_a = stop_lookup[stop_a_id]
-        stop_b = stop_lookup[stop_b_id]
-
-        oba_stop_ids = list(
-            dict.fromkeys([stop_a_id, stop_b_id])
-        )
-
-        physical_stops.append(
-            {
-                "id": f"{route_data['route_id']}_station_{position}",
-                "route_position": position,
-                "name": stop_a["name"],
-                "oba_stop_ids": oba_stop_ids,
-                "lat": (stop_a["lat"] + stop_b["lat"]) / 2,
-                "lon": (stop_a["lon"] + stop_b["lon"]) / 2,
-            }
-        )
-
+    for position, key in enumerate(sorted(clusters), start=1):
+        ids = clusters[key]
+        members = [lookup[stop_id] for stop_id in ids]
+        physical_stops.append({
+            "id": f"{route_data['route_id']}_station_{position}",
+            "route_position": position,
+            "name": combined_name(members),
+            "source_stop_names": list(dict.fromkeys(stop.get("name") or stop["id"] for stop in members)),
+            "oba_stop_ids": ids,
+            "lat": sum(stop["lat"] for stop in members) / len(members),
+            "lon": sum(stop["lon"] for stop in members) / len(members),
+        })
     return make_stops_gdf(physical_stops)
 
 def make_route_lines_gdf(route_polylines):

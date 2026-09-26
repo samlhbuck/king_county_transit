@@ -1,4 +1,6 @@
-polylines
+polyline
+python-dotenv
+requests
 pandas
 geopandas
 matplotlib

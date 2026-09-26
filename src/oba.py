@@ -7,7 +7,7 @@ import requests
 load_dotenv()
 
 # Define constants
-API_KEY = os.environ["OBA_API_KEY"]
+API_KEY = os.environ.get("OBA_API_KEY")
 BASE_URL = "https://api.pugetsound.onebusaway.org/api/where"
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 ROUTE_DATA_DIR = PROJECT_ROOT / "data" / "raw" / "oba" / "routes"
@@ -63,6 +63,7 @@ def fetch_and_save_agency_routes():
                 "description": route["description"],
                 "null_safe_name": route["nullSafeShortName"],
                 "name": route["shortName"],
+                "type": route.get("type"),
             }
             for route in routes
         ]
@@ -82,6 +83,8 @@ def load_agency_routes():
 
 
 def _get_oba(path, **parameters):
+    if not API_KEY:
+        raise RuntimeError("Set OBA_API_KEY in .env to fetch uncached transit data.")
     parameters["key"] = API_KEY
     endpoint = f"{BASE_URL}/{path}.json"
 
@@ -221,6 +224,7 @@ def fetch_route_data(route_id):
         "route_id": route_id,
         "stops": stops,
         "stop_groupings": entry.get("stopGroupings", []),
+        "route_references": data["references"].get("routes", []),
         "polylines": entry.get("polylines", []),
     }
 
