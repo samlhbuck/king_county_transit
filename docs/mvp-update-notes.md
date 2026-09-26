@@ -237,6 +237,19 @@ intersections now use a millionth-foot precision grid and discard edge-only
 contacts before subsequent overlays. Cached route regression tests verify valid
 areas, unchanged corridor coverage within one square foot, and no material overlap.
 
+## Priority 3: live departures (2026-09-25)
+
+Selected physical stops now expose an on-demand OneBusAway departure check across
+their constituent boarding platforms. Results combine and sort the next two hours,
+show the route and destination, and distinguish live predictions from scheduled
+times. The request is manual so selecting stops does not consume API calls. It
+requires `OBA_API_KEY`; the existing dashboard remains usable without one.
+
+This begins priority 3 but does not yet calculate service frequency, walking paths
+or time-budget reachability. Unit coverage verifies platform deduplication, sorting
+and predicted-time precedence. The 43-test Python suite, JavaScript regression
+suite and desktop/mobile browser smoke suite pass.
+
 ## Rider exploration and map clarity
 
 The map now names the active route prominently and shows its selected destination

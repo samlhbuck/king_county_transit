@@ -121,6 +121,40 @@ def get_routes_for_agency(id):
     return _get_oba(f"routes-for-agency/{id}")
 
 
+def get_departures(stop_ids, minutes_after=120):
+    """Return a compact, deduplicated live-departure list for boarding stops."""
+    departures = {}
+    for stop_id in dict.fromkeys(stop_ids):
+        response = _get_oba(
+            f"arrivals-and-departures-for-stop/{stop_id}",
+            minutesBefore=0,
+            minutesAfter=minutes_after,
+        )
+        data = response.get("data", {})
+        entry = data.get("entry") or {}
+        routes = {
+            route.get("id"): route.get("shortName") or route.get("longName") or route.get("id")
+            for route in data.get("references", {}).get("routes", [])
+        }
+        for item in entry.get("arrivalsAndDepartures", []):
+            scheduled = item.get("scheduledDepartureTime") or item.get("scheduledArrivalTime")
+            predicted = item.get("predictedDepartureTime") or item.get("predictedArrivalTime")
+            time = predicted if item.get("predicted") and predicted else scheduled
+            if not time:
+                continue
+            key = (item.get("tripId"), item.get("serviceDate"), scheduled, stop_id)
+            departures[key] = {
+                "routeId": item.get("routeId"),
+                "route": routes.get(item.get("routeId"), item.get("routeShortName") or item.get("routeId")),
+                "destination": item.get("tripHeadsign") or "Destination unavailable",
+                "stopId": stop_id,
+                "scheduledTime": scheduled,
+                "departureTime": time,
+                "predicted": bool(item.get("predicted") and predicted),
+            }
+    return sorted(departures.values(), key=lambda item: item["departureTime"])
+
+
 
 def fetch_and_save_stop(stop_id):
     response = _get_oba(f"stop/{stop_id}")

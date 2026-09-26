@@ -9,6 +9,7 @@ from urllib.parse import parse_qs, urlsplit
 
 from analysis.first_hill import ROUTE_ID
 from src.route_explorer import build_dashboard_data, refresh_sources, route_catalog
+from src import oba
 
 ROOT = Path(__file__).resolve().parent
 
@@ -64,6 +65,17 @@ def main():
                     self.send_body(body)
                 elif path == "/api/routes":
                     self.send_body(json.dumps(catalog).encode())
+                elif path == "/api/departures":
+                    query = parse_qs(urlsplit(self.path).query)
+                    route_id = self.route_id()
+                    stop_id = query.get("stop", [""])[0]
+                    with lock:
+                        route_payload = json.loads(payload(route_id))
+                    stop = next((item for item in route_payload["stops"] if item["id"] == stop_id), None)
+                    if not stop:
+                        raise ValueError("Choose a stop on the selected route.")
+                    departures = oba.get_departures(stop.get("oba_stop_ids", []))
+                    self.send_body(json.dumps({"departures": departures}).encode())
                 elif path in assets:
                     filename, content_type = assets[path]
                     self.send_body((ROOT / "web" / filename).read_bytes(), content_type)

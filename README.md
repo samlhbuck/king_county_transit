@@ -22,6 +22,8 @@ if absent, it is retrieved through `src.oba`.
   status is not verification that construction has started.
 - Click a map stop, a stop comparison row or the stop selector to
   update its development summary and project table.
+- Check OneBusAway for the next departures at a selected physical stop;
+  live predictions are labeled separately from scheduled times.
 - View permit counts, consolidated project counts, gross units added, units
   removed, net units and estimated development value.
 - Pan/zoom the map, toggle projects/catchments, and reset filters or the map view.

@@ -107,7 +107,7 @@ def build_dashboard_data(route_id=first_hill.ROUTE_ID):
         "streets": [mapping(g) for g in streets.geometry],
         "route": [mapping(g) for g in results["route_lines_gdf"].to_crs("EPSG:3857").geometry],
         "corridor": mapping(gpd.GeoSeries([corridor], crs=tod.ANALYSIS_CRS).to_crs("EPSG:3857").iloc[0]),
-        "stops": records(display_stops, ["id", "route_position", "name", "x", "y"]),
+        "stops": records(display_stops, ["id", "route_position", "name", "oba_stop_ids", "x", "y"]),
         "projects": records(projects, ["OriginalAddress1", "Description", "IssuedDate",
             "NearestStopId", "StopAssignments", "HousingUnitsAdded", "HousingUnitsRemoved",
             "HousingUnitsNet", "EstProjectCostNumeric", "StatusCurrent", "PermitTypeDesc", "UseHint",

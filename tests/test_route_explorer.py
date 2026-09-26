@@ -29,6 +29,7 @@ class DashboardDataTests(unittest.TestCase):
         json.dumps(self.data, allow_nan=False)
         ids = {s['id'] for s in self.data['stops']}
         self.assertEqual(len(ids), 10)
+        self.assertTrue(all(s['oba_stop_ids'] for s in self.data['stops']))
         for kind in ('projects', 'permits'):
             self.assertTrue(all(row['NearestStopId'] in ids for row in self.data[kind]))
         self.assertEqual(len(self.data['projects']), len(self.results['consolidated_projects_gdf']))

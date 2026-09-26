@@ -8,7 +8,7 @@ slice: map clarity and fluid exploration (priorities 1–2 below).
 | --- | --- | --- |
 | 1 | Prominent route identity, route-context stop names, optional explained assignment polygons, viewport-wide spotlight, corridor-wide projects, consistent comparison metrics and map leaders | Complete; automated checks and desktop/mobile visual review passed |
 | 2 | Compact independently scrolling panels, clickable connecting lines, nearest-stop arrival, Back restoring prior route/stop/filters/map view | Complete; automated checks and desktop/mobile visual review passed |
-| 3 | Nearby routes from a chosen origin; walking and boarding direction; frequency/next departures; single-route time-budget exploration | Deferred |
+| 3 | Nearby routes from a chosen origin; walking and boarding direction; frequency/next departures; single-route time-budget exploration | In progress: cached connections and boarding direction complete; live next departures underway; walking validation, frequency and time budgets remain |
 | 4 | Small destination pilot: parks, verified public waterfront and street-end beach access, concise creator notes | Deferred |
 | 5 | Development application/issuance/completion/occupancy timelines; explicit date basis and clickable years; ridership context | Deferred; local ridership cache audit recorded below |
 | 6 | Tree canopy, scenic/elevation views, transit travel-time variability and traffic context | Deferred |

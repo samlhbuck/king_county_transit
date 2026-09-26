@@ -141,7 +141,7 @@ if (typeof document !== 'undefined') {
   const number = new Intl.NumberFormat('en-US', {maximumFractionDigits: 0});
   const money = new Intl.NumberFormat('en-US', {style: 'currency', currency: 'USD', maximumFractionDigits: 0});
   const compactMoney = new Intl.NumberFormat('en-US', {style: 'currency', currency: 'USD', notation: 'compact', maximumFractionDigits: 1});
-  let data, selectedProject = '', selected = '', catalog = [], busy = false, view = [0, 0, 800, 850], scale, bounds;
+  let data, selectedProject = '', selected = '', catalog = [], busy = false, departureStop = '', view = [0, 0, 800, 850], scale, bounds;
   const navigation = [];
   const controlIds = ['direction','start','end','project-status','work-type','metric','sort','housing-sort'];
   let projectLayer, stopLayer, catchmentLayer, selectionLayer;
@@ -193,6 +193,35 @@ if (typeof document !== 'undefined') {
     const previous=snapshot(), origin=data.stops.find(s=>s.id===selected);
     $('route').value=route;
     await load(false,{origin, previous});
+  }
+  async function loadDepartures() {
+    if (!selected || busy) return;
+    const requestedStop = selected;
+    departureStop = requestedStop;
+    $('load-departures').disabled = true;
+    $('departure-note').textContent = 'Checking OneBusAway…';
+    $('departures').replaceChildren();
+    try {
+      const response = await fetch(`/api/departures?route=${encodeURIComponent(data.routeId)}&stop=${encodeURIComponent(requestedStop)}`);
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Unable to load departures.');
+      if (selected !== requestedStop) return;
+      const now = Date.now();
+      for (const item of result.departures.slice(0, 8)) {
+        const minutes = Math.max(0, Math.round((item.departureTime - now) / 60000));
+        const row = el('div', undefined, 'departure');
+        row.append(el('strong', item.route || 'Route'), el('span', item.destination),
+          el('b', minutes === 0 ? 'Due' : `${minutes} min`));
+        row.title = `${item.predicted ? 'Live prediction' : 'Scheduled time'} · ${new Date(item.departureTime).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})}`;
+        $('departures').append(row);
+      }
+      if (!result.departures.length) $('departures').append(el('p', 'No departures found in the next two hours.'));
+      $('departure-note').textContent = 'OneBusAway · live predictions where available; otherwise scheduled times. Refresh manually.';
+    } catch (error) {
+      if (selected === requestedStop) $('departure-note').textContent = error.message;
+    } finally {
+      if (selected === requestedStop) $('load-departures').disabled = false;
+    }
   }
   function markPreset(preset) {
     for (const button of document.querySelectorAll('[data-preset]')) button.setAttribute('aria-pressed', String(button.dataset.preset === preset));
@@ -262,6 +291,12 @@ if (typeof document !== 'undefined') {
     stats($('stop-summary'), summarize(chosenProjects, chosenPermits));
     $('period').textContent = `${start} — ${end} · issue dates`;
     const stop = data.stops.find(s => s.id === selected);
+    if (departureStop !== selected) {
+      departureStop = '';
+      $('departures').replaceChildren();
+      $('departure-note').textContent = stop ? 'Check live arrivals for this boarding location.' : 'Select a stop to check live departures.';
+    }
+    $('load-departures').disabled = !stop || busy;
     $('selection-title').textContent = stop ? stop.name : 'All stops';
     $('selection-title').title = stop?.fullName || '';
     $('stop-full-name').textContent = stop?.fullName || '';
@@ -425,6 +460,7 @@ if (typeof document !== 'undefined') {
   $('zoom-in').addEventListener('click', () => zoom(.75));
   $('zoom-out').addEventListener('click', () => zoom(1.33));
   $('focus-stop').addEventListener('click', () => routeMap.focusStop(selected));
+  $('load-departures').addEventListener('click', loadDepartures);
   if (new URLSearchParams(location.search).has('offline')) $('show-geography').checked = false;
   (async () => {
     try {
