@@ -213,12 +213,12 @@ def assign_nearest_stop(
 
 def analyze_route(route_id,catchment_distance_feet,
                     start_date, end_date,
-                    frequency="QS"):
+                    frequency="QS", route_data=None):
     """
     Analyze development permits in relation to a specific transit route.
     """
     # Fetch stops and permits data
-    route_data = oba.load_route_data(route_id)
+    route_data = route_data if route_data is not None else oba.load_route_data(route_id)
     route_stops = route_data["stops"]
     
     stop_groupings = route_data["stop_groupings"]

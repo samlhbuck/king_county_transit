@@ -294,3 +294,118 @@ view, actual Route 50 naming, visible spotlight bounds, consecutive mouse-drag
 translations, independently scrolling rankings, sticky route identity and mobile
 overflow. Final desktop/mobile screenshots were visually reviewed. Online tiles
 remain disabled in automated tests.
+
+## Project completion year
+
+Clicked project details show the year from the source CompletedDate. Consolidated
+projects use the latest recorded completion date among their retained primary permits.
+Completed records without a date show “Completion year unavailable.” This is permit
+completion, not independently verified building occupancy. Date filters still use issuance.
+
+
+## Route geometry and geographic handoff (2026-10-08)
+
+Route 217's feed represents its directions as many overlapping fragments. Ordered
+stop tracing now follows the connected feed network instead of choosing a short
+fragment. Its directional profiles span about 9–10 miles and retain all 31/29
+boarding stops. Disconnected geometry is never bridged. Available directional
+profiles remain selectable; feed geometry is not a dated-trip guarantee.
+
+Route changes initialize the scrubber near the geographic handoff, show filled
+progress behind it, and retain ride-view scale or closer. Direct choices use the
+current ride position, selected stop or map center when nearby. Distant routes
+use default framing. Back restores both the scrubber and viewport. Changing a
+direction keeps the scrubber near the same place.
+
+Residential permit blotches use muted mauve, with matching callout and legend
+swatches. Zoning colors are unchanged. Tapping the selected permit again closes
+its callout and clears selection; another permit replaces it. More retains the
+supporting details without conflicting double-tap behavior.
+
+Validation: 64 Python tests, JavaScript regressions, desktop/mobile browser smoke,
+ride/callout toggle, viewport and selector checks pass. Desktop/mobile screenshots
+were reviewed. Browser tests disable online geographic tiles; real iPhone framing
+and basemap contrast await review after deployment. No deployment was performed.
+
+
+## First-use exploration guide (2026-10-08)
+
+A quiet, reopenable ? button opens a nonblocking guide to development dots,
+route scrubbing and current zoning. It includes the selected route, sourced
+service opening date where available, and current permit issue-date window.
+First Hill offers three optional observation prompts. Zoning effective/retrieval
+dates are in a disclosure; issue dates, completion and causation stay distinct.
+The panel closes via its button, Escape, or an outside interaction without moving
+the camera. Current zoning is the map-toggle label; its default remains off.
+
+Desktop/mobile guide and mobile viewport browser checks pass, and the mobile
+screenshot was reviewed. Actual iPhone review and deployment remain. This is
+28A only: the working private feedback submission path in 28B is still open.
+
+
+## Cached terrain and stop synchronization (2026-10-08)
+
+Both directions of First Hill and South Lake Union Streetcars have cached USGS
+3DEP terrain profiles. Elevation replaces the current-zoning bands in the same
+mobile profile area; labelled axes and a current elevation readout share the
+scrubber's route-distance scale. Sampling includes 100-foot intervals and stop
+ticks, retaining source model, resolution, datum and acquisition/retrieval dates.
+Missing coverage remains gaps, never a false zero or invented connecting path.
+Ground terrain is not surveyed track elevation, especially at bridges/tunnels.
+
+Map stop selection updates route fill, scrubber and terrain without recentering;
+scrubbing selects the corresponding physical stop without opening a panel.
+Canonical direction IDs align the terrain with direction filters. Explicit
+repeated ordered stops retain occurrence distances. Cache geometry fingerprints
+prevent old elevations from attaching to new shapes. No runtime USGS requests.
+The existing release-preparation workflow includes the ignored elevation files.
+See elevation-data.md for reproducible preparation and source validation.
+
+Validation: 69 Python tests, JavaScript terrain/geometry/metrics checks, and
+desktop/mobile terrain (two routes), guide, viewport, permit and broad route
+browser checks pass. The mobile terrain screenshot was reviewed. Actual iPhone
+review and deployment remain. Item 25's user-reported G Line anomaly stays open.
+
+## Elevation catalog rollout (2026-10-08)
+
+Prepared 107 profiles for 54 routes with locally cached transit geometry:
+68,089 terrain samples, no missing samples or remaining retrieval failures.
+G Line remains excluded pending Item 25; 338 other catalog routes lack cached
+transit geometry. The resumable catalog command skips valid snapshots, isolates
+failures, writes an atomic report, and supports planning without elevation queries.
+USGS multipoint requests use 250-point batches and bounded transient retries.
+Source metadata includes native resolution units without assuming all rasters
+report metres. Numeric cache keys tolerate projection roundoff; when GEOS emits
+different redundant vertices, every actual query location, chainage and section
+break must match before terrain is reused. No runtime USGS requests are added.
+
+Validation: 78 Python tests and JavaScript terrain/geometry checks pass. Live
+desktop/mobile browser checks pass for Route 10, Route 217 and Link 2 Line, including
+direction changes, scrubber synchronization and manual camera overrides. Live
+API checks also verified the streetcars, Link 2 Line and combined Route 43/44.
+The final production deployment reached SUCCESS; representative live API checks
+verified elevation availability and corrected native-resolution metadata.
+
+## Contextual information and intentional inspection (2026-10-08)
+
+Items 41 and 26: selecting stops and scrubbing leaves the mobile map open.
+The existing ? control opens selected-stop details, expands the existing permit
+callout, or explains the active terrain/zoning lens with available provenance.
+Every context offers general guidance. Stop-tick double-click deliberately opens
+existing details; new selections and route/lens changes close old panels.
+Keyboard activation and Escape work without camera or progress changes.
+The lower scrubber has a transparent 44-pixel hit area, retaining capture when a
+drag moves off the track, with no increase to the visible control or panel height.
+
+Validation: all 78 Python tests; JavaScript geometry/terrain checks; new desktop
+and mobile contextual-help/drag/keyboard checks; existing guide, terrain, viewport
+and broad browser smoke tests pass. Actual iPhone touch verification remains.
+Product feedback submission (28C) remains the next staged deliverable.
+Production deployment reached SUCCESS. The final live desktop/mobile contextual
+help, keyboard, route/lens dismissal and lower-hit-area capture checks passed.
+
+## Private product feedback (2026-10-08)
+
+The general ? guide now includes Send feedback. Category is required; text and previewed route/stop/lens context are optional. Success requires a committed receipt, failures retain drafts, and retries avoid duplicate records. The private SQLite queue has automatic 90-day retention and basic abuse protection. Production uses a persistent /feedback volume; private reading is documented in [product-feedback.md](product-feedback.md). All 85 Python tests and desktop/mobile feedback browser checks passed locally; actual iPhone keyboard review remains.
+
+Production deployment 38f98f98-f835-4c69-a24c-104df3710568 reached SUCCESS; the /feedback volume is Ready and live desktop/mobile submission checks passed. Private production reading and redeploy survival were verified for both automated receipts after successful deployment 7ec09359-eb34-4603-a50f-5dc4e0e7697f. Original timestamps remained unchanged. The explicitly authorized temporary SSH key was removed.

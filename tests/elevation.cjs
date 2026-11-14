@@ -1,0 +1,15 @@
+const assert=require('node:assert/strict');
+const {elevationAt}=require('../web/elevation.js');
+const samples=[{distanceFeet:0,elevationMeters:0},{distanceFeet:100,elevationMeters:30},{distanceFeet:200,elevationMeters:null},{distanceFeet:300,elevationMeters:60},{distanceFeet:400,elevationMeters:100,breakBefore:true}];
+assert.equal(elevationAt(samples,50),15);
+assert.equal(elevationAt(samples,0),0);
+assert.equal(elevationAt(samples,150),null);
+assert.equal(elevationAt(samples,350),null);
+assert.equal(elevationAt(samples,400),100);
+const {orientProfile}=require('../web/frontage.js');
+const p={lengthFeet:400,vertices:[{x:10,y:0,distanceFeet:0},{x:0,y:0,distanceFeet:400}],samples:[],stops:[],elevation:{samples}};
+const reversed=orientProfile(p);
+assert.equal(reversed.elevation.samples[0].elevationMeters,100);
+assert.equal(reversed.elevation.samples[1].breakBefore,true);
+assert.equal(elevationAt(reversed.elevation.samples,350),15);
+console.log('Terrain interpolation, real zero, missing coverage, section breaks and directional reversal passed');

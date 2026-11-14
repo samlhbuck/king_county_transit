@@ -1,0 +1,15 @@
+**
+!requirements.txt
+!app.py
+!src/
+!src/**
+!analysis/
+!analysis/**
+!web/
+!web/**
+!data/
+!data/**
+**/__pycache__/
+**/*.pyc
+**/.env*
+**/*.tmp

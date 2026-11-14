@@ -66,6 +66,9 @@ class DashboardDataTests(unittest.TestCase):
         self.assertIsNone(load_route_history('unknown'))
         self.assertEqual(self.data['defaultStart'], '2016-01-23')
         self.assertEqual(self.data['defaultPreset'], 'life')
+        with patch('src.route_explorer.load_route_history', return_value=None):
+            unknown_history = build_dashboard_data()
+        self.assertEqual(unknown_history['defaultPreset'], '5y')
         self.assertTrue(self.data['routeHistory']['source_url'].startswith('https://'))
 
     def test_refresh_reuses_existing_retrievers(self):

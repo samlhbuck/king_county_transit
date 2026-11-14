@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 import json
 
+import pandas as pd
 import geopandas as gpd
 import requests
 
@@ -53,11 +54,42 @@ def summarize_area(zones, area):
             'overlap': sum(row['percent'] for row in categories) > covered + .1}
 
 
-def route_zoning(stops, corridor, map_area, radius, assignment_areas=None, direction_areas=None):
-    if not CACHE.exists():
+def route_zoning(stops, corridor, map_area, radius, assignment_areas=None, direction_areas=None, route_data=None, development_frames=(), continuation_data=None):
+    from src.municipal_zoning import sources, CACHE_DIR
+    frames, provenance = [], []
+    inputs = [('Seattle', CACHE, URL)] + [(spec['name'], CACHE_DIR / f'{key}.geojson', spec['url']) for key, spec in sources().items()]
+    for name, path, source in inputs:
+        if not path.exists():
+            provenance.append({'name': name, 'source': source, 'available': False})
+            continue
+        raw = json.loads(path.read_text())
+        frame = gpd.GeoDataFrame.from_features(raw['features'], crs='EPSG:4326').to_crs(stops.crs)
+        frame.geometry = frame.geometry.make_valid()
+        # Identify Yesler by its official district code, not the generic MPC label.
+        if name == 'Seattle' and 'ZONING' in frame.columns:
+            nc = frame.ZONING.fillna('').str.match(r'^NC[123]P?(?:-| |$)')
+            frame.loc[nc, 'DETAIL_DESC'] = frame.loc[nc, 'DETAIL_DESC'] + ' [' + frame.loc[nc, 'ZONING'] + ']'
+            frame.loc[frame.ZONING.eq('MPC-YT'), 'DETAIL_DESC'] = 'Master Planned Community — Yesler Terrace (MPC-YT)'
+        frame['jurisdiction'] = name
+        in_view = bool(frame.intersects(map_area).any())
+        provenance.append({'name': name, 'source': source, 'available': True, 'inView': in_view,
+                           'retrievedAt': raw.get('retrieved_at'), 'effectiveDate': raw.get('effective_date'),
+                           'audit': raw.get('audit')})
+        # Only nearby polygons are needed by the map, corridor summaries and route samples.
+        frames.append(frame.loc[frame.intersects(map_area), ['DETAIL_DESC', 'jurisdiction', 'geometry']])
+    if not frames:
+        for frame in development_frames:
+            frame["CurrentZoning"] = "Unknown / unmapped"
         return None
-    zones = gpd.read_file(CACHE).to_crs(stops.crs)
-    zones.geometry = zones.geometry.make_valid()
+    zones = gpd.GeoDataFrame(pd.concat(frames, ignore_index=True), crs=stops.crs)
+    for frame in development_frames:
+        projected = frame.to_crs(zones.crs)
+        labels = []
+        for point in projected.geometry:
+            matches = zones.iloc[list(zones.sindex.query(point, predicate='intersects'))] if point is not None and not point.is_empty else zones.iloc[:0]
+            names = sorted(set(matches.DETAIL_DESC.dropna().astype(str)))
+            labels.append(names[0] if len(names) == 1 else 'Overlapping zoning' if names else 'Unknown / unmapped')
+        frame['CurrentZoning'] = labels
     summary = {'all': summarize_area(zones, corridor)}
     areas = assignment_areas.set_index('id').geometry if assignment_areas is not None else None
     for row in stops.itertuples():
@@ -69,8 +101,9 @@ def route_zoning(stops, corridor, map_area, radius, assignment_areas=None, direc
         directional[direction]['all'] = summarize_area(zones, gpd.GeoSeries(list(regions.values()), crs=stops.crs).union_all())
     display = gpd.clip(zones, map_area)
     display.geometry = display.geometry.simplify(15)
-    raw = json.loads(CACHE.read_text())
-    return {'directionSummaries': directional, 'summaries': summary, 'source': URL, 'retrievedAt': raw.get('retrieved_at'),
+    from src.frontage import main_route_profile
+    frontage = main_route_profile(route_data, zones, stops, continuation_data) if route_data else None
+    return {'frontage': frontage, 'directionSummaries': directional, 'summaries': summary, 'sources': provenance, 'source': URL, 'retrievedAt': next((s.get('retrievedAt') for s in provenance if s['name']=='Seattle'), None),
             'features': json.loads(display[['DETAIL_DESC', 'geometry']].to_crs('EPSG:3857').to_json())['features']}
 
 

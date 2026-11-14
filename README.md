@@ -163,3 +163,117 @@ names in stop details. All stops shows corridor-wide projects by default. Assign
 polygons are optional under Explain assignment areas; they represent project
 assignments, not walking reachability. The stop comparison list scrolls separately
 so the desktop map remains alongside it.
+
+## Explore from your location
+
+Use **Use my location** for a one-time browser location request (HTTPS or localhost),
+or pan the map and choose **Use map center**. A blue marker shows the origin; device
+locations also show the reported accuracy circle. **Clear origin** removes it.
+Coordinates stay in page memory and are not sent to the app API or persisted.
+Online basemap tiles still load for the visible map extent when enabled.
+
+Nearby results list up to eight cached lines within 1 km, measured
+straight-line. Each line shows the nearest stop per cached destination direction;
+missing directions are labeled unavailable. Routes missing from
+local caches are unknown; distance is not a verified walking path or service
+availability. Choosing a direction selects that boarding location’s physical stop and feed
+direction; Back restores the prior route view. Origin discovery does not track moves.
+
+Location checks: `node tests/origins.cjs`, Python `test_origins.py`, and the browser
+smoke suite (simulated location success, denied permission and stale callbacks).
+
+## Along the route
+
+The map’s **Along the route · zoning profile** panel shows two bands of current
+zoning from the installed municipal caches beside a selected feed path, weighted by path distance. Choose a
+path, hover or drag the bands, or use the range slider (including arrow keys) to
+move a pink map pin without changing the selected stop or development filters.
+Clicking a stop tick selects and highlights its physical stop and updates the stop
+lens; if needed, the direction filter changes so that stop is visible. Explicit scrubbing pans an offscreen pin
+into view while preserving zoom; hovering does not pan.
+
+This is an experimental adjacent-zoning approximation: points are sampled 60 feet
+to each side of the path at roughly 100-foot intervals (at most 1,200 intervals
+per shape). It does not measure parcel frontage, exclude every wide roadway or
+establish actual neighborhood character. Unknown areas and conflicting zoning
+are retained. Separate feed shapes are not stitched into a presumed itinerary;
+paths without a direction association are labeled unverified. Tick positions use
+nearby source stops projected onto the shape; loops can make these ambiguous.
+Current zoning is independent of permit date filters.
+
+Checks: `node tests/frontage.cjs`, Python `test_frontage.py`, and the browser suite
+cover geometry interpolation, left/right reversal, unknown/overlapping zones,
+path selection, and map-pin updates without changing stop selection.
+
+## Municipal zoning caches
+
+Zoning now supports **Seattle, Shoreline, Bellevue and Redmond**; permit totals
+remain Seattle-only. The route strip and zoning overlay preserve each city's
+native descriptions and codes. The lens lists installed sources and retrieval
+dates; unmapped locations remain unknown.
+
+Download/refresh the three pilot municipalities with:
+
+```bash
+.venv/bin/python -m src.municipal_zoning shoreline bellevue redmond
+```
+
+Each is also available under **Refresh cached sources**. Imports validate IDs,
+counts and polygon geometry, clip to official city boundaries, and retain the old
+cache if validation fails. Each ignored cache preserves raw features, boundary
+geometry, metadata and normalized records. Restart a running server after a CLI
+refresh to clear its route-response cache; dashboard refresh clears it automatically.
+See [municipal data notes](docs/municipal-development-data.md) for source fields,
+import counts and coverage limits. No additional permit datasets are loaded.
+
+## Mobile nearby rides
+
+At phone widths (650 px or less), **Nearby rides** opens a map and bottom panel.
+Use your location or the map center to find cached boarding options, grouped by
+line and destination. Drag the panel handle up/down or tap it to change its height.
+The map stays visible above it. **Route details** opens the existing analysis;
+choosing a boarding option opens that stop's details. Switch back to Nearby rides
+to keep exploring from the same origin. No permission request runs on page load.
+
+The initial ordering uses straight-line proximity. It does not yet estimate
+walking routes, waiting time, evening/weekend usefulness or personal “gravity.”
+A browser with mobile-sized emulation can preview the layout at localhost; using
+browser location on a deployed phone-accessible site will require HTTPS.
+
+## Selected-route departures and linked trips
+
+**Check departures** gives the selected route its own section so frequent nearby
+routes cannot crowd it out. If absent from the next two hours, it searches daily
+OneBusAway schedules through seven days ahead (bounded to 24 schedule requests
+and a 45-second between-request budget). Search failures or incomplete coverage
+are shown explicitly. Longer waits show a Seattle date and time. Other routes at
+the same physical stop retain their separate two-hour list.
+
+Where available, departures show explicit previous/next scheduled trip links to
+other routes, including potential 43/44 continuations. These are same-vehicle
+schedule relationships, not confirmation that passengers can stay aboard. A
+continuation map, verified round-trip pairing and ride badges remain future work.
+
+API references: [daily stop schedules](https://developer.onebusaway.org/api/where/methods/schedule-for-stop),
+[trip details](https://developer.onebusaway.org/api/where/elements/trip-details).
+
+
+## Terrain elevation
+
+Choose **Elevation** above the route scrubber to see a cached USGS terrain
+profile instead of the zoning bands. Both directions of First Hill and South
+Lake Union Streetcars have pilot snapshots. Scrubbing and map-stop selection
+share the profile position; explicit camera movement still overrides following.
+The chart labels feet and distance, with independent axis scales. It describes
+ground terrain, which can differ from bridge or tunnel height.
+
+Prepare another route or refresh snapshots explicitly:
+
+```bash
+.venv/bin/python -m src.elevation 23_102638 23_100340
+```
+
+Add `--refresh` to requery existing snapshots, then restart the app. Runtime
+scrubbing never queries the elevation service. Uncached or changed geometry shows
+Elevation unavailable. [Elevation data notes](docs/elevation-data.md) document
+provenance, sampling, datum, caching, limitations and release inclusion.

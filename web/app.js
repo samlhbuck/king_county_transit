@@ -52,7 +52,7 @@ function statusGroup(status) {
   return 'unknown';
 }
 function filterDevelopment(rows, status, work) {
-  return rows.filter(p => (!status || statusGroup(p.StatusCurrent) === status) &&
+  return rows.filter(p => (status==='all' || (status ? statusGroup(p.StatusCurrent) === status : !/\bexpired\b/i.test(p.StatusCurrent || ''))) &&
     (!work || (work === 'new' ? p.PermitTypeDesc === 'New' : /alteration/i.test(p.PermitTypeDesc || ''))));
 }
 /* Pure aggregation helpers are also exercised by the Node regression tests. */
@@ -137,12 +137,75 @@ if (typeof document !== 'undefined') {
   const $ = id => document.getElementById(id);
   const NS = 'http://www.w3.org/2000/svg';
   const labels = {permits: 'Permit records', projects: 'Development projects', added: 'Gross units added',
-    removed: 'Units removed', net: 'Net units', value: 'Estimated value'};
+    removed: 'Units removed', net: 'Net units', value: 'Estimated construction value'};
   const number = new Intl.NumberFormat('en-US', {maximumFractionDigits: 0});
   const money = new Intl.NumberFormat('en-US', {style: 'currency', currency: 'USD', maximumFractionDigits: 0});
   const compactMoney = new Intl.NumberFormat('en-US', {style: 'currency', currency: 'USD', notation: 'compact', maximumFractionDigits: 1});
+  let lastSummaryStop = '', lastSummaryRoute = '';
   let data, selectedProject = '', selected = '', catalog = [], busy = false, departureStop = '', view = [0, 0, 800, 850], scale, bounds;
   const navigation = [];
+  let explicitStop='';
+  function showGuide(general=false){
+    mobileRides.setMode('map');
+    updateGuide();
+    const terrain=frontageLens.elevation.mode==='elevation';
+    const lens=!general&&(terrain||$('show-zoning').checked);
+    $('guide-title').textContent=lens?(terrain?'About elevation':'About current zoning'):'Explore the route';
+    $('guide-context').hidden=!lens;
+    $('guide-context').textContent=lens?(terrain?$('elevation-source').textContent:$('guide-zoning').textContent):'';
+    $('explore-guide').hidden=false;$('open-guide').setAttribute('aria-expanded','true');
+    $('open-guide').setAttribute('aria-controls','explore-guide');
+    $('explore-guide').tabIndex=-1;$('explore-guide').focus({preventScroll:true});
+  }
+  function inspectStop(){
+    const stop=data?.stops.find(s=>s.id===selected);
+    if(!stop)return;
+    closeGuide();
+    document.dispatchEvent(new CustomEvent('route-stop-inspect',{detail:{map:routeMap,stop,preserveView:true}}));
+    if(!mobileRides.media.matches){const panel=document.querySelector('.workspace > aside');panel.id='stop-details';panel.tabIndex=-1;panel.focus({preventScroll:true});}
+    $('open-guide').setAttribute('aria-controls',mobileRides.media.matches?'mobile-detail-panel':'stop-details');
+    $('open-guide').setAttribute('aria-expanded','true');
+  }
+  function updateGuide(){
+    if(!data)return;
+    $('guide-route').textContent=routeLabel();
+    const history=data.routeHistory;
+    if(history?.service_start_date){
+      const source=el('a','Service began '+history.service_start_date);source.href=history.source_url;source.target='_blank';source.rel='noopener noreferrer';
+      $('guide-route').append(document.createTextNode(' · '),source);
+    }
+    $('guide-dates').textContent=`Permit issue dates shown: ${$('start').value} through ${$('end').value}. Issued does not mean completed, or caused by transit.`;
+    const sources=(data.zoning?.sources||[]).filter(s=>s.available);
+    $('guide-zoning').textContent=sources.map(s=>`${s.name}: ${s.effectiveDate?'effective '+s.effectiveDate.slice(0,10):'effective date unavailable'}${s.retrievedAt?', retrieved '+s.retrievedAt.slice(0,10):''}`).join(' · ');
+    $('guide-zoning').hidden=!sources.length;
+    $('guide-zoning-details').hidden=!sources.length;
+    $('guide-prompts').hidden=data.routeId!=='23_102638';
+  }
+  function closeGuide(restoreFocus=false){
+    $('explore-guide').hidden=true;$('open-guide').setAttribute('aria-expanded','false');
+    if(restoreFocus)$('open-guide').focus({preventScroll:true});
+  }
+  $('open-guide').addEventListener('click',()=>{
+    if(!$('explore-guide').hidden){closeGuide(true);return;}
+    const project=selectedProject&&$('project-floating-card')&&data?.projects.find(p=>p.SourcePermitNumbers===selectedProject);
+    if(project){routeMap.openProjectCard(project,true,true);return;}
+    if(explicitStop&&explicitStop===selected){
+      if(mobileRides.media.matches&&mobileRides.mode==='details'){mobileRides.setMode('map');return;}
+      inspectStop();return;
+    }
+    showGuide();
+  });
+  document.addEventListener('general-guide-request',()=>showGuide(true));
+  $('guide-general').addEventListener('click',()=>showGuide(true));
+  document.addEventListener('mobile-details-closed',()=>{if($('explore-guide').hidden){$('open-guide').setAttribute('aria-expanded','false');$('open-guide').setAttribute('aria-controls','explore-guide');}});
+  document.addEventListener('project-card-open',()=>{
+    const card=$('project-floating-card');if(!card)return;
+    const general=el('button','How to explore');general.addEventListener('click',()=>{card.remove();showGuide(true);});card.append(general);
+  });
+  const general=el('button','How to explore');general.addEventListener('click',()=>showGuide(true));document.querySelector('.workspace > aside').prepend(general);
+  $('close-guide').addEventListener('click',()=>closeGuide(true));
+  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('explore-guide').hidden){event.preventDefault();closeGuide(true);}});
+  document.addEventListener('pointerdown',event=>{if(!event.target.closest('#explore-guide,#open-guide'))closeGuide();});
   const controlIds = ['direction','start','end','project-status','work-type','metric','sort','housing-sort'];
   let projectLayer, stopLayer, catchmentLayer, selectionLayer;
   const fmt = (key, value) => key === 'value' ? compactMoney.format(value) : number.format(value);
@@ -158,29 +221,111 @@ if (typeof document !== 'undefined') {
     if (parent) parent.append(node);
     return node;
   }
-  const routeMap = new window.RouteMap($('map'), id => selectStop(id), p => selectProject(p));
+  const routeMap = new window.RouteMap($('map'), (id,stopArea) => selectStop(id,stopArea), p => selectProject(p));
+  const mobileRides = new window.MobileRides();
+  new window.OriginPicker(routeMap, async (route, origin, boardingId, directionId) => {
+    if(busy || !data)return;
+    document.getElementById('origin-dialog').close();
+    const previous=snapshot();
+    $('route').value=route;
+    await load(false,{origin,previous,boardingId,directionId});
+  });
+  const frontageLens = new window.FrontageLens(routeMap, (boardingId, pathName, options={}) => {
+    if(options.fromScrub){explicitStop='';closeGuide();if(mobileRides.mode==='details')mobileRides.setMode('map');}
+    const stop = data?.stops.find(s => s.oba_stop_ids.includes(boardingId));
+    if (!stop) return;
+    const direction = data.directions.find(d => d.id === $('direction').value);
+    if (direction && !direction.stopOrder.includes(stop.id)) {
+      $('direction').value = data.directions.find(d => (d.id === frontageLens.profile?.directionId) && d.stopOrder.includes(stop.id))?.id || '';
+    }
+    if(options.fromScrub&&selected===stop.id&&!selectedProject)return;
+    selectStop(stop.id,false,options);
+  });
+  for(const [id,event] of [['profile-lens-mode','click'],['show-zoning','change'],['frontage-path','change']])$(id).addEventListener(event,()=>{closeGuide();if(mobileRides.mode==='details')mobileRides.setMode('map');});
   function fit() { routeMap.fit(); }
+  new window.FeedbackForm(()=>{
+    const stop=data?.stops.find(s=>s.id===selected);
+    const context={routeId:data?.routeId||'',routeName:routeLabel(),lens:frontageLens.elevation.mode==='elevation'?'Elevation':$('show-zoning').checked?'Current zoning':'Development'};
+    if(stop){context.stopId=stop.id;context.stopName=stop.name;}
+    return Object.fromEntries(Object.entries(context).map(([key,value])=>[key,String(value).slice(0,200)]));
+  });
+  $('open-feedback').addEventListener('click',()=>document.dispatchEvent(new Event('feedback-open')));
   function zoom(factor) { routeMap.zoom(factor); }
-  function makeMap() { routeMap.load(data); }
-  function stats(target, summary) {
+  function makeMap(handoff) { routeMap.load(data); frontageLens.load(data,handoff); }
+  function stats(target, summary, available=true) {
     target.replaceChildren();
-    for (const [key, label] of Object.entries(labels)) {
+    for (const [key, label] of Object.entries(labels).filter(([key])=>["permits","net","value"].includes(key))) {
       const card = el('div', undefined, 'stat');
-      card.append(el('span', label), el('strong', fmt(key, summary[key])));
-      if (key === 'value') card.title = money.format(summary[key]);
+      card.append(el('span', label), el('strong', available ? fmt(key, summary[key]) : '—'));
+      if (key === 'value' && available) card.title = money.format(summary[key]);
       target.append(card);
     }
   }
-  function selectStop(id) { selectedProject = ''; selected = id; $('stop').value = id; render(); }
+  function renderZoningPie(zone,projects=[],permits=[],available=true){
+    const pie=$('zoning-pie'), key=$('zoning-pie-key');key.replaceChildren();pie.replaceChildren();
+    const labels={residential:'Neighborhood residential',multifamily:'Multifamily',mixed:'Other mixed use',downtownMixed:'Downtown Mixed',commercial:'Commercial',nc:'Neighborhood Commercial',ncp:'Neighborhood Commercial · Pedestrian',institutional:'Institutional',industrial:'Industrial',open:'Open space',unknown:'Unmapped / unclassified'};
+    const group=name=>{const k=zoningCharacter(name);return /^nc[123]p$/.test(k)?'ncp':/^nc[123]$/.test(k)?'nc':k;};
+    const palette={...characterPalette,nc:characterPalette.nc2,ncp:characterPalette.nc3p}, measure=$('comparison-measure').value;
+    const measureLabel={permits:'Permit records',added:'Housing units added',value:'Estimated construction value'}[measure];
+    $('comparison-title').textContent=`Land share vs ${measureLabel.toLowerCase()}`;
+    $('comparison-caption').textContent=`Inner: land area · Outer: ${measureLabel.toLowerCase()} by zoning`;
+    const land=Object.fromEntries(Object.keys(labels).map(k=>[k,0])), actual={...land};
+    for(const c of zone?.categories || [])land[group(c.name)]+=c.percent;
+    land.unknown+=Math.max(0,100-(zone?.coveredPercent || 0));
+    const records=measure==='permits'?permits:projects;
+    const mismatch=Object.fromEntries(Object.keys(labels).map(k=>[k,0]));
+    let total=0,missing=0;
+    for(const p of records){
+      const raw=measure==='permits'?1:p[measure==='added'?'HousingUnitsAdded':'EstProjectCostNumeric'];
+      if(raw==null || !Number.isFinite(Number(raw))){missing++;continue;}
+      const amount=Math.max(0,Number(raw));total+=amount;const family=group(p.CurrentZoning || 'Unknown');actual[family]+=amount;
+      if(housingZoningMismatch(p)==='single')mismatch[family]+=amount;
+    }
+    const gradient=values=>{let offset=0;return 'conic-gradient('+Object.keys(labels).map(k=>{const start=offset;offset+=values[k];return `${palette[k]} ${start}% ${offset}%`;}).join(',')+')';};
+    const shares=Object.fromEntries(Object.keys(labels).map(k=>[k,total?actual[k]/total*100:0]));
+    pie.hidden=!!zone?.overlap;
+    let offset=0;const segments=[];
+    for(const k of Object.keys(labels)){
+      const flagged=total?(mismatch[k] || 0)/total*100:0;
+      segments.push(`${palette[k]} ${offset}% ${offset+shares[k]-flagged}%`);offset+=shares[k]-flagged;
+      if(flagged){segments.push(`${palette.residential} ${offset}% ${offset+flagged}%`);offset+=flagged;}
+    }
+    pie.style.background=total?'conic-gradient('+segments.join(',')+')':'#e1e5e2';
+    const inner=el('div',undefined,'comparison-inner');inner.style.background=gradient(land);pie.append(inner,el('div',undefined,'comparison-hole'));
+    pie.setAttribute('aria-label',`Land area and ${measureLabel.toLowerCase()} shares; percentages in adjacent table.`);
+    for(const k of Object.keys(labels)){
+      if(!land[k]&&!actual[k])continue;
+      if(k==='unknown' && land[k]<1 && shares[k]<1)continue;
+      const row=el('div'),swatch=el('i');swatch.style.background=palette[k];if(k==='ncp')swatch.classList.add('pedestrian-swatch');
+      row.append(swatch,el('span',labels[k]),el('strong',`${land[k].toFixed(1)}% / ${total?shares[k].toFixed(1)+'%':'—'}`));
+      row.title=`${labels[k]}: ${land[k].toFixed(1)}% land; ${total?shares[k].toFixed(1)+'% '+measureLabel.toLowerCase():'no measured development'}`;key.append(row);
+    }
+    $('comparison-coverage').textContent=`Both rings group by current zoning. Pale residential segments within development slices identify explicit new single-family construction. Category totals include these segments. Seattle permits only.${missing?' '+missing+' records lack this measure.':''}${!available?' Development data unavailable for this area; Seattle permit coverage only.':!total?' No measured '+measureLabel.toLowerCase()+' in this selection.':''}${zone?.overlap?' Overlapping land categories: shares are not additive; wheel unavailable.':''}`;
+  }
+  function selectStop(id,stopArea=false,options={}) {
+    explicitStop=options.fromScrub?'':id;closeGuide();
+    $('project-floating-card')?.remove();
+    if(!id)$('map-all-stops').checked=true;else if(!options.fromScrub&&(stopArea||!selected))$('map-all-stops').checked=false;
+    selectedProject='';selected=id;$('stop').value=id;render();
+    if(id&&!options.fromScrub){
+      frontageLens.selectMapStop(data.stops.find(s=>s.id===id));
+      document.getElementById('project-floating-card')?.remove();
+    }
+    document.dispatchEvent(new CustomEvent('route-stop-selected',{detail:{map:routeMap,stop:data.stops.find(s=>s.id===id),preserveView:true}}));
+    if(options.inspect)inspectStop();
+  }
   function selectProject(project, fromRow = false) {
-    selectedProject = project.SourcePermitNumbers;
+    explicitStop='';closeGuide();
+    selectedProject = project?.SourcePermitNumbers || '';
     if (fromRow) $('show-projects').checked = true;
     render();
-    routeMap.highlightProject(project, fromRow);
-    if (fromRow) $('map').scrollIntoView({block:'center',behavior:'smooth'});
+    if(project)routeMap.highlightProject(project, fromRow);
+    else $('map-project-info').replaceChildren();
+    if (fromRow && !mobileRides.media.matches) $('map').scrollIntoView({block:'center',behavior:'smooth'});
   }
   function snapshot() {
     return {route:data.routeId, stop:selected, project:selectedProject, view:[...routeMap.view],
+      profileId:frontageLens.profile?.id, fraction:Number(frontageLens.slider.value)/1000,
       label:`${routeLabel()} · ${data.stops.find(s=>s.id===selected)?.name || 'All stops'}`,
       controls:Object.fromEntries(controlIds.map(id=>[id,$(id).value]))};
   }
@@ -188,39 +333,52 @@ if (typeof document !== 'undefined') {
     const info=catalog.find(r=>r.route_id===data?.routeId);
     return data?.routeId==='23_102638' ? 'First Hill Streetcar · 96' : (info?.name && /^\d+$/.test(info.name) ? 'Route '+info.name : info?.name) || data?.routeName || '';
   }
-  async function connect(route) {
+  async function connect(route, sourceStop) {
     if (busy) return;
-    const previous=snapshot(), origin=data.stops.find(s=>s.id===selected);
+    const previous=snapshot(), origin=sourceStop || data.stops.find(s=>s.id===selected);
     $('route').value=route;
     await load(false,{origin, previous});
   }
   async function loadDepartures() {
     if (!selected || busy) return;
-    const requestedStop = selected;
-    departureStop = requestedStop;
+    const requestedStop = selected, requestedRoute = data.routeId;
+    departureStop = `${requestedRoute}:${requestedStop}`;
     $('load-departures').disabled = true;
-    $('departure-note').textContent = 'Checking OneBusAway…';
+    $('departure-note').textContent = 'Checking this route and nearby departures… Sparse routes may need a daily schedule search.';
     $('departures').replaceChildren();
     try {
       const response = await fetch(`/api/departures?route=${encodeURIComponent(data.routeId)}&stop=${encodeURIComponent(requestedStop)}`);
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Unable to load departures.');
-      if (selected !== requestedStop) return;
+      if (selected !== requestedStop || data.routeId !== requestedRoute) return;
       const now = Date.now();
-      for (const item of result.departures.slice(0, 8)) {
-        const minutes = Math.max(0, Math.round((item.departureTime - now) / 60000));
-        const row = el('div', undefined, 'departure');
-        row.append(el('strong', item.route || 'Route'), el('span', item.destination),
-          el('b', minutes === 0 ? 'Due' : `${minutes} min`));
-        row.title = `${item.predicted ? 'Live prediction' : 'Scheduled time'} · ${new Date(item.departureTime).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})}`;
-        $('departures').append(row);
-      }
-      if (!result.departures.length) $('departures').append(el('p', 'No departures found in the next two hours.'));
-      $('departure-note').textContent = 'OneBusAway · live predictions where available; otherwise scheduled times. Refresh manually.';
+      const showGroup=(heading,items)=>{
+        $('departures').append(el('h4',heading));
+        for(const item of items){
+          const minutes=Math.max(0,Math.round((item.departureTime-now)/60000));
+          const row=el('div',undefined,'departure');
+          const when=minutes<60?(minutes===0?'Due':`${minutes} min`):new Date(item.departureTime).toLocaleString('en-US',{timeZone:'America/Los_Angeles',weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+          row.append(el('strong',item.route || 'Route'),el('span',item.destination),el('b',when));
+          const basis=el('small',item.predicted?'Live prediction':'Scheduled · Seattle time');row.append(basis);
+          row.title=`${basis.textContent} · ${new Date(item.departureTime).toLocaleString('en-US',{timeZone:'America/Los_Angeles'})}`;
+          $('departures').append(row);
+          for(const link of item.linkedTrips || []){
+            const routeName=catalog.find(r=>r.route_id===link.routeId)?.name || link.route;
+            const text=link.relation==='next'?`Vehicle’s next scheduled trip: ${routeName} toward ${link.destination}.`:`Vehicle’s previous scheduled trip: ${routeName} toward ${link.destination}.`;
+            $('departures').append(el('p',text+' Same-vehicle schedule link; confirm whether you can stay aboard.','departure-link'));
+          }
+          if(item.linksChecked===false)$('departures').append(el('p','Through-trip details unavailable.','departure-link'));
+        }
+      };
+      showGroup(`Selected route · ${routeLabel()}`,result.selectedDepartures || []);
+      if(!result.selectedDepartures?.length)$('departures').append(el('p',result.selectedMessage));
+      if(result.otherDepartures?.length)showGroup('Other routes at this stop · next two hours',result.otherDepartures);
+      $('departure-note').textContent=`OneBusAway · ${result.scheduleSearched?'Daily schedules searched up to seven days ahead. ':''}Scheduled times are not live predictions. Refresh manually. ${(result.notes || []).join(' ')}`;
+
     } catch (error) {
-      if (selected === requestedStop) $('departure-note').textContent = error.message;
+      if (selected === requestedStop && data.routeId === requestedRoute) $('departure-note').textContent = error.message;
     } finally {
-      if (selected === requestedStop) $('load-departures').disabled = false;
+      if (selected === requestedStop && data.routeId === requestedRoute) $('load-departures').disabled = false;
     }
   }
   function markPreset(preset) {
@@ -246,6 +404,7 @@ if (typeof document !== 'undefined') {
         node.setAttribute('aria-pressed', String(selected === row.id));
         node.addEventListener('click', () => selectStop(row.id));
       }
+      if(row.available===false){node.append(el('span',row.name),el('b','—'));node.setAttribute('aria-label',`${row.name}: development data unavailable`);target.append(node);continue;}
       const label = el('span', row.name, 'bar-label');
       const track = el('span', undefined, housing ? 'bar-track diverging' : 'bar-track');
       if (housing) {
@@ -269,6 +428,7 @@ if (typeof document !== 'undefined') {
   }
   function render() {
     if (!data) return;
+    updateGuide();
     const start = $('start').value, end = $('end').value;
     const valid = start && end && start <= end;
     $('date-error').textContent = valid ? '' : 'Choose both dates, with the start on or before the end.';
@@ -276,31 +436,51 @@ if (typeof document !== 'undefined') {
     if (!valid) return;
     $('date-coverage').textContent = data.maxDate && end > data.maxDate ? `Latest cached qualifying permit in this corridor: ${data.maxDate}. The selected range extends beyond that date; recent data may be incomplete.` : '';
     const direction = $('direction').value;
+    frontageLens.syncDirection(direction);
     const orderedIds = (data.directions || []).find(d=>d.id === direction)?.stopOrder;
     const orderedStops = orderedIds ? orderedIds.map(id=>data.stops.find(s=>s.id===id)).filter(Boolean) : data.stops;
     if (selected && !orderedStops.some(s=>s.id===selected)) { selected=''; selectedProject=''; }
     $('stop').replaceChildren(new Option('All stops', ''), ...orderedStops.map(s=>new Option(s.name,s.id)));
     $('stop').value = selected;
+    const stopIndex=orderedStops.findIndex(s=>s.id===selected);
+    $('previous-stop').disabled=stopIndex<=0;
+    $('first-stop').disabled=!orderedStops.length||stopIndex===0;
+    $('last-stop').disabled=!orderedStops.length||stopIndex===orderedStops.length-1;
+    $('next-stop').disabled=!orderedStops.length || stopIndex===orderedStops.length-1;
     const scope = rows => filterDevelopment(inPeriod(rows, start, end), $('project-status').value, $('work-type').value).filter(p => matchesStop(p, '', direction));
     const projects = scope(data.projects);
     const permits = scope(data.permits);
     if (!projects.some(p=>p.SourcePermitNumbers===selectedProject && matchesStop(p, selected, direction))) selectedProject='';
     const chosenProjects = selected ? projects.filter(p => matchesStop(p, selected, direction)) : projects;
     const chosenPermits = selected ? permits.filter(p => matchesStop(p, selected, direction)) : permits;
-    stats($('route-summary'), summarize(projects, permits));
-    stats($('stop-summary'), summarize(chosenProjects, chosenPermits));
+
+    // Record absence is not proof of zero development or geographic coverage.
+    // Establish evidence from all cached dates, before applying UI filters.
+    const developmentAvailable=data.permits.some(p=>matchesStop(p,selected,direction));
+    stats($('stop-summary'), summarize(chosenProjects, chosenPermits),developmentAvailable);
+    if(!developmentAvailable)$('stop-summary').prepend(el('p','Development data unavailable · No cached Seattle permit records for this area.','development-unavailable'));
+    else if(chosenProjects.length && chosenProjects.every(p=>p.EstProjectCostNumeric==null)){const card=$('stop-summary').lastElementChild;card.querySelector('strong').textContent='—';card.title='Estimated construction value unavailable';}
     $('period').textContent = `${start} — ${end} · issue dates`;
     const stop = data.stops.find(s => s.id === selected);
-    if (departureStop !== selected) {
+    if (stop) { lastSummaryStop=stop.id; lastSummaryRoute=data.routeId; }
+    const remembered=lastSummaryRoute===data.routeId && orderedStops.find(s=>s.id===lastSummaryStop);
+    $('summary-title').textContent=stop ? stop.name : 'Full route';
+    $('summary-stop').disabled=!remembered;
+    $('summary-stop').textContent=remembered ? remembered.name : 'Selected stop';
+    $('summary-stop').setAttribute('aria-pressed',String(!!stop));
+    $('summary-route').setAttribute('aria-pressed',String(!stop));
+    if (departureStop !== `${data.routeId}:${selected}`) {
       departureStop = '';
       $('departures').replaceChildren();
-      $('departure-note').textContent = stop ? 'Check live arrivals for this boarding location.' : 'Select a stop to check live departures.';
+      $('departure-note').textContent = stop ? 'Check this route’s next departure and other routes at this stop.' : 'Select a stop to check departures.';
     }
     $('load-departures').disabled = !stop || busy;
     $('selection-title').textContent = stop ? stop.name : 'All stops';
     $('selection-title').title = stop?.fullName || '';
     $('stop-full-name').textContent = stop?.fullName || '';
     $('map-route-title').textContent = routeLabel();
+    $('continuation-note').hidden=data.routeId!=='1_100223';
+    $('continuation-note').textContent=data.routeId==='1_100223'?'Includes Route 44 stops and development to Ballard.':'';
     $('map-direction').textContent = $('direction').selectedOptions[0]?.textContent || '';
     $('back-route').hidden = !navigation.length;
     $('back-route').textContent = navigation.length ? 'Back to '+navigation.at(-1).label : '';
@@ -313,12 +493,14 @@ if (typeof document !== 'undefined') {
     for (const legend of document.querySelectorAll('.housing-legend')) legend.hidden = metric !== 'housing';
     $('housing-sort-label').hidden = metric !== 'housing';
     const rows = orderedStops.map((s,index) => ({id: s.id, name: s.name, position: index+1,
+      available:data.permits.some(p=>matchesStop(p,s.id,direction)),
       summary: summarize(projects.filter(p => matchesStop(p, s.id, direction)), permits.filter(p => matchesStop(p, s.id, direction)))}));
     drawBars($('ranking'), sortChartRows(rows, $('sort').value, metric, $('housing-sort').value), metric, true);
     $('ranking-note').textContent = ['asc','desc'].includes($('sort').value) ? 'Ranks follow the selected metric and sort direction; ties share a rank.' : $('sort').value === 'name' ? 'Stops sorted alphabetically.' : direction ? 'Numbers follow the selected departure direction.' : 'Choose a direction for departure order. Combined view uses the first group, with additional stops appended.';
     $('annual-metric').textContent = $('metric').selectedOptions[0].textContent;
     drawBars($('annual-chart'), annualSummaries(chosenProjects, chosenPermits, start, end), metric);
-    $('annual-title').textContent = stop ? `Development by issue year · ${stop.name}` : 'Route development by issue year';
+    $('annual-title').textContent = `${$('metric').selectedOptions[0].textContent} by issue year${stop?' · '+stop.name:''}`;
+    if(!developmentAvailable){$('annual-chart').replaceChildren(el('p','Development data unavailable'));$('ranking').replaceChildren(el('p','Development data unavailable'));}
     $('annual-note').textContent = `${stop ? 'Selected stop' : 'Entire selected route'} · selected dates · first/last years may be partial. Removals include demolition and other recorded unit losses.`;
     const cost = housingCost(chosenProjects);
     $('housing-cost').textContent = cost.perUnit == null ? 'Not available' : `${money.format(cost.perUnit)} / added unit`;
@@ -336,33 +518,45 @@ if (typeof document !== 'undefined') {
     const adu=chosenProjects.filter(p=>/\b[ad]*adu\b|accessory dwelling/i.test(p.Description||'')).length;
     $('use-signals').textContent = `Description hints: ${mixed} mixed-use · ${institution} institutional · ${adu} accessory dwelling projects. These do not establish neighborhood form or zoning compliance.`;
 
-    routeMap.update(projects, selected, {direction, selectedProject, topStops:topStops(rows,metric,$('housing-sort').value), permitCounts: Object.fromEntries(rows.map(row => [row.id, row.summary.permits])), projects: $('show-projects').checked, catchments: $('show-catchments').checked, geography: $('show-geography').checked, size: $('project-size').value, zoning: $('show-zoning').checked});
-    $('comparison-note').textContent = `Gold rings mark the highest ${metric==='housing' ? labels[$('housing-sort').value] : labels[metric]} totals among stops in the selected direction(s); ties included. Filters change the totals. Point colors show housing added. No rings when all totals are zero or negative.`;
+    const mapProjects=projects;
+    routeMap.update(mapProjects, selected, {direction, selectedProject, topStops:topStops(rows,metric,$('housing-sort').value), permitCounts: Object.fromEntries(rows.map(row => [row.id, row.summary.permits])), projects: $('show-projects').checked, catchments: $('show-catchments').checked, allRoutePermits: $('map-all-stops').checked, geography: $('show-geography').checked, size: $('project-size').value, zoning: $('show-zoning').checked});
+    $('comparison-note').textContent = `Gold rings mark the highest ${metric==='housing' ? labels[$('housing-sort').value] : labels[metric]} totals among stops in the selected direction(s); ties included. Filters change the totals. Point colors show suggested use; size shows the selected development measure. No rings when all totals are zero or negative.`;
+    frontageLens.highlightStop(stop);
     $('focus-stop').disabled = !selected;
+    $('map-all-stops').disabled=!selected;
+    if(!selected)$('map-all-stops').checked=true;
+    $('map-all-stops').setAttribute('aria-label','Show all route permits instead of stop-area permits');
     $('zoning-summary').replaceChildren();
+    renderZoningPie(null,chosenProjects,chosenPermits,developmentAvailable);
     if (data.zoning) {
       const zone=(direction ? data.zoning.directionSummaries?.[direction]?.[selected || 'all'] : data.zoning.summaries[selected || 'all']) || {coveredPercent:0,categories:[],overlap:false};
-      $('zoning-note').textContent = `${stop ? stop.name : 'Whole route corridor'} · ${zone.coveredPercent.toFixed(1)}% mapped · cached ${data.zoning.retrievedAt?.slice(0,10) || 'date unknown'}${zone.overlap ? ' · Overlapping categories: percentages are not additive.' : ''}`;
-      for(const category of [...zone.categories, {name:'Unmapped / outside Seattle',percent:Math.max(0,100-zone.coveredPercent)}]) {
+      renderZoningPie(zone,chosenProjects,chosenPermits,developmentAvailable);
+      $('zoning-note').textContent = `${stop ? stop.name : 'Whole route corridor'} · ${zone.coveredPercent.toFixed(1)}% mapped · ${data.zoning.sources?.filter(s=>s.available&&s.inView).map(s=>s.name).join(', ') || 'no imported zoning in this view'}${zone.overlap ? ' · Overlapping categories: percentages are not additive.' : ''}`;
+      for(const category of [...zone.categories, {name:'Unmapped / coverage unavailable',percent:Math.max(0,100-zone.coveredPercent)}]) {
         const row=el('div', undefined, 'zone-row'); const name=el('span', category.name);const swatch=el('i', undefined, 'legend-swatch');swatch.style.background=window.zoningColor(category.name);name.prepend(swatch);row.append(name,el('strong', category.percent.toFixed(1)+'%')); $('zoning-summary').append(row);
       }
-    } else $('zoning-note').textContent = 'No zoning cache yet. Choose Seattle zoning under Retrieve updated data.';
+    } else $('zoning-note').textContent = 'No zoning cache yet. Choose a zoning source under Retrieve updated data.';
 
     const choice=id=>$(id).selectedOptions[0]?.textContent || '';
-    $('active-context').textContent = `${catalog.find(r=>r.route_id===data.routeId)?.name || data.routeName} · ${choice('direction')} · ${stop?.name || 'All stops'} · ${choice('work-type')} · ${choice('project-status')} · Issued ${start}–${end} · ${choice('metric')} · Seattle permits${data.maxDate ? ' through '+data.maxDate : ''}`;
+    $('active-context').textContent = `Permits since ${start}${end!==seattleToday() ? ' · through '+end : ''}${choice('work-type')!=='All work' ? ' · '+choice('work-type') : ''} · ${choice('project-status')}`;
     $('transfers').replaceChildren();
-    $('transfer-note').textContent = stop ? 'Cached connections · select a line to explore nearby boarding.' : 'Select a stop for connecting lines.';
-    if (stop) {
-      for (const connection of data.transfers?.stops[stop.id] || []) {
-        const button=el('button',connection.name,'connection-route');
-        button.disabled=busy || !catalog.some(r=>r.route_id===connection.routeId);
-        button.dataset.routeId=connection.routeId;
-        button.title=connection.sameStop?'Same boarding stop':`Nearby · ${connection.distanceFeet} ft straight-line; walking access unverified`;
-        button.addEventListener('click',()=>connect(connection.routeId));
-        $('transfers').append(button);
+    $('transfer-note').textContent = '';
+    const connections=new Map();
+    for(const source of stop ? [stop] : orderedStops){
+      for(const connection of data.transfers?.stops[source.id] || []){
+        if(!connections.has(connection.routeId))connections.set(connection.routeId,{...connection,source});
       }
-      if (!$('transfers').children.length) $('transfers').append(el('p','No connections found in cached data.'));
     }
+    for(const connection of connections.values()){
+      const button=el('button',connection.name,'connection-route');
+      button.disabled=busy || !catalog.some(r=>r.route_id===connection.routeId);
+      button.dataset.routeId=connection.routeId;
+      button.setAttribute('aria-label',`Explore ${connection.name}`);
+      button.title=`${connection.source.name} · ${connection.sameStop?'Same boarding stop':connection.distanceFeet+' ft straight-line; walking access unverified'}`;
+      button.addEventListener('click',()=>connect(connection.routeId,connection.source));
+      $('transfers').append(button);
+    }
+    if(!connections.size)$('transfer-note').textContent='No connections found in cached data.';
 
     $('project-rows').replaceChildren();
     const sorted = [...chosenProjects].sort((a, b) => b.IssuedDate.localeCompare(a.IssuedDate));
@@ -387,22 +581,39 @@ if (typeof document !== 'undefined') {
       }
       $('project-rows').append(row);
     }
-    if (!sorted.length) { const cell = el('td', 'No development projects in this selection. Try a wider date range.'); cell.colSpan = 7; const row = el('tr'); row.append(cell); $('project-rows').append(row); }
+    if (!sorted.length) { const cell = el('td', developmentAvailable?'No development projects in this selection. Try a wider date range.':'Development data unavailable for this area. Seattle permits only.'); cell.colSpan = 7; const row = el('tr'); row.append(cell); $('project-rows').append(row); }
   }
+  const routeDataCache=new window.RouteDataCache();
   async function load(refresh = false, transition = null) {
     if (busy) return;
-    busy = true; $('refresh').disabled = true; $('route').disabled = true;
-    $('status').className = ''; $('status').textContent = refresh ? 'Retrieving updated data… Permit and street downloads can take a few minutes.' : 'Loading route geometry, stops and development…';
+    busy = true; document.body.classList.add('route-loading'); $('refresh').disabled = true; $('route').disabled = true;
+    $('status').className = '';
+    const loadingName=catalog.find(r=>r.route_id===$('route').value)?.name || 'route';
+    $('status').textContent = refresh ? 'Updating source data… This can take a few minutes.' : `Loading ${loadingName}… Preparing the map and development stats.`;
+    const loadingReminder=setTimeout(()=>{if(busy)$('status').textContent=refresh?'Still updating source data… Large downloads can take a few minutes.':`Still loading ${loadingName}… The route analysis is taking a little longer.`;},10000);
     const route = $('route').value || '23_102638';
+    const oldScale=routeMap.scale;
+    const oldView=[...routeMap.view];
+    const center=data?routeMap.inverse(oldView[0]+oldView[2]/2,oldView[1]+oldView[3]/2):null;
+    const riding=data&&Number(frontageLens.slider.value)>0;
+    const oldPosition=riding&&frontageLens.profile?profilePosition(frontageLens.profile,Number(frontageLens.slider.value)/1000):null;
+    const handoff=transition?.origin?transition:!refresh&&data&&route!==data.routeId?{origin:oldPosition||data.stops.find(s=>s.id===selected)||(center?{x:center[0],y:center[1]}:null)}:null;
     const url = refresh ? `/api/refresh?route=${encodeURIComponent(route)}&source=${$('source').value}` : `/api/data?route=${encodeURIComponent(route)}`;
     try {
-      const response = await fetch(url, refresh ? {method: 'POST', headers: {'X-Route-Explorer': '1'}} : {});
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Unable to load route.');
+      // A source refresh can affect multiple corridors, so invalidate all entries.
+      if(refresh)routeDataCache.clear();
+      const result = await routeDataCache.get(route,async()=>{
+        const response = await fetch(url, refresh ? {method: 'POST', headers: {'X-Route-Explorer': '1'}} : {});
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error || 'Unable to load route.');
+        return payload;
+      });
       const changed = !data || data.routeId !== result.routeId;
       const displayNames=stopDisplayNames(result.stops);
       for (const stop of result.stops) { stop.fullName=stop.name; stop.name=displayNames[stop.id]; }
-      data = result; selected = ''; selectedProject = '';
+      document.getElementById('project-floating-card')?.remove();
+      data = result; selected = ''; selectedProject = '';explicitStop='';closeGuide();mobileRides.setMode('map');
+
       const routeInfo = catalog.find(r => r.route_id === data.routeId);
       const name = routeInfo?.name || routeInfo?.description || data.routeName;
       document.title = `Route Explorer · ${name}`;
@@ -424,24 +635,32 @@ if (typeof document !== 'undefined') {
         markPreset(data.defaultPreset);
       }
       $('coverage').textContent = data.minDate ? `Cached qualifying permit issue dates for this corridor: ${data.minDate} through ${data.maxDate}.` : 'No qualifying Seattle permits were found in this route corridor.';
-      makeMap();
       if (transition?.restore) {
         for (const [id,value] of Object.entries(transition.restore.controls)) $(id).value=value;
         selected=transition.restore.stop; selectedProject=transition.restore.project;
         markPreset('custom'); navigation.pop();
       } else if (transition?.origin) {
-        selected=closestStop(data.stops,transition.origin)?.id || '';
+        if(transition.directionId && data.directions.some(d=>d.id===transition.directionId))$('direction').value=transition.directionId;
+        selected=data.stops.find(s=>s.oba_stop_ids.includes(transition.boardingId))?.id || closestStop(data.stops,transition.origin)?.id || '';
         navigation.push(transition.previous);
       } else if (!refresh) navigation.length=0;
+      makeMap(transition?.restore?{fraction:transition.restore.fraction,directionId:transition.restore.controls.direction}:handoff);
+      if(transition?.restore?.profileId){frontageLens.path.value=transition.restore.profileId;frontageLens.showPath({fraction:transition.restore.fraction});}
       render();
       if (transition?.restore) { routeMap.view=[...transition.restore.view]; routeMap.setView(); }
+      else if(handoff&&frontageLens.handoffPoint){
+        const point=frontageLens.handoffPoint,[x,y]=routeMap.xy([point.x,point.y]);
+        const width=Math.min(oldView[2]/oldScale,1400)*routeMap.scale,height=width*oldView[3]/oldView[2];
+        routeMap.view=[x-width/2,y-height/2,width,height];routeMap.setView();
+      }
       else if (transition?.origin && selected) routeMap.focusStop(selected);
+      document.dispatchEvent(new CustomEvent('route-loaded',{detail:{routeId:data.routeId}}));
       $('status').textContent = `${refresh ? 'Data refreshed. ' : ''}${data.stops.length} physical stops · ${number.format(data.projects.length)} projects across all cached dates. Choose dates to explore.`;
     } catch (error) {
       $('status').className = 'error';
       $('status').textContent = `${error.message}${data ? ' The previous route remains displayed.' : ''}`;
       if (data) $('route').value = data.routeId;
-    } finally { busy = false; $('refresh').disabled = false; $('route').disabled = false; }
+    } finally { clearTimeout(loadingReminder);busy = false; document.body.classList.remove('route-loading'); $('refresh').disabled = false; $('route').disabled = false; }
   }
   for (const id of ['direction', 'project-status', 'work-type', 'metric', 'sort', 'housing-sort', 'show-projects', 'show-catchments', 'show-geography', 'project-size', 'show-zoning']) $(id).addEventListener('change', render);
   for (const id of ['start', 'end']) $(id).addEventListener('change', () => { markPreset('custom'); render(); });
@@ -452,12 +671,42 @@ if (typeof document !== 'undefined') {
   $('back-route').addEventListener('click',()=>{if(busy || !navigation.length)return;const restore=navigation.at(-1);$('route').value=restore.route;load(false,{restore});});
   $('close-filters').addEventListener('click',()=>$('filter-dialog').close());
   $('stop').addEventListener('change', e => selectStop(e.target.value));
+  function stepStop(delta){
+    const options=Array.from($('stop').options).filter(o=>o.value);
+    const index=options.findIndex(o=>o.value===selected), next=index+delta;
+    if(next>=0 && next<options.length){
+      selectStop(options[next].value);
+      if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches)$('stop-summary').animate([{opacity:.4,transform:`translateX(${delta*10}px)`},{opacity:1,transform:'translateX(0)'}],{duration:160,easing:'ease-out'});
+    }
+  }
+  for(const [id,last] of [['first-stop',false],['last-stop',true]])$(id).addEventListener('click',()=>{const stops=Array.from($('stop').options).filter(o=>o.value);const target=last?stops.at(-1):stops[0];if(target)selectStop(target.value);});
+  $('previous-stop').addEventListener('click',()=>stepStop(-1));
+  $('next-stop').addEventListener('click',()=>stepStop(1));
+  $('comparison-measure').addEventListener('change',render);
+  let swipeStart=null;
+  $('stop-summary').addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse')swipeStart={x:e.clientX,y:e.clientY};});
+  $('stop-summary').addEventListener('pointerup',e=>{
+    if(!swipeStart)return;
+    const dx=e.clientX-swipeStart.x,dy=e.clientY-swipeStart.y;swipeStart=null;
+    if(Math.abs(dx)>50 && Math.abs(dx)>Math.abs(dy)*1.5)stepStop(dx<0?1:-1);
+  });
+  $('stop-summary').addEventListener('pointercancel',()=>swipeStart=null);
+  $('summary-route').addEventListener('click',()=>selectStop(''));
+  $('summary-stop').addEventListener('click',()=>selectStop(lastSummaryStop));
+  $('map-all-stops').addEventListener('change',render);
   $('clear').addEventListener('click', () => selectStop(''));
   $('reset').addEventListener('click', () => { if (!data) return; $('direction').value = ''; $('project-status').value = ''; $('work-type').value = ''; $('metric').value = 'housing'; $('sort').value = 'route'; $('housing-sort').value = 'net'; selected = ''; selectedProject = ''; $('stop').value = ''; applyPreset(data.defaultPreset); });
   $('route').addEventListener('change', () => load());
   $('refresh').addEventListener('click', () => load(true));
   $('fit').addEventListener('click', fit);
   $('zoom-in').addEventListener('click', () => zoom(.75));
+  $('color-palette').value=previousPalette?'previous':'urban';
+  $('color-palette').addEventListener('change',()=>{
+    try{localStorage.setItem('route-lens-palette',$('color-palette').value);location.reload();}
+    catch{$('status').className='error';$('status').textContent='Palette preference could not be saved on this device.';}
+  });
+  const legendKeys=['residential','multifamily','commercial','nc1','nc2','nc3','nc3p','downtownMixed','mixed','institutional','industrial','open','unknown'];
+  document.querySelectorAll('.project-key .legend-swatch').forEach((node,i)=>{node.style.background=permitPalette[legendKeys[i]];});
   $('zoom-out').addEventListener('click', () => zoom(1.33));
   $('focus-stop').addEventListener('click', () => routeMap.focusStop(selected));
   $('load-departures').addEventListener('click', loadDepartures);
@@ -470,6 +719,7 @@ if (typeof document !== 'undefined') {
       catalog.sort((a, b) => (a.name || a.route_id).localeCompare(b.name || b.route_id, undefined, {numeric: true}));
       $('route').replaceChildren(...catalog.map(r => new Option(`${r.name || r.route_id} · ${r.description || r.long_name || r.route_id}`, r.route_id)));
       $('route').value = '23_102638';
+      new window.MobileRoutePicker(catalog,routeMap);
       await load();
     } catch (error) { $('status').className = 'error'; $('status').textContent = error.message; }
   })();

@@ -137,6 +137,8 @@ def get_departures(stop_ids, minutes_after=120):
             for route in data.get("references", {}).get("routes", [])
         }
         for item in entry.get("arrivalsAndDepartures", []):
+            if item.get("departureEnabled") is False or item.get("tripStatus") == "CANCELED":
+                continue
             scheduled = item.get("scheduledDepartureTime") or item.get("scheduledArrivalTime")
             predicted = item.get("predictedDepartureTime") or item.get("predictedArrivalTime")
             time = predicted if item.get("predicted") and predicted else scheduled
@@ -144,6 +146,8 @@ def get_departures(stop_ids, minutes_after=120):
                 continue
             key = (item.get("tripId"), item.get("serviceDate"), scheduled, stop_id)
             departures[key] = {
+                "tripId": item.get("tripId"),
+                "serviceDate": item.get("serviceDate"),
                 "routeId": item.get("routeId"),
                 "route": routes.get(item.get("routeId"), item.get("routeShortName") or item.get("routeId")),
                 "destination": item.get("tripHeadsign") or "Destination unavailable",

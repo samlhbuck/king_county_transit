@@ -36,21 +36,45 @@ def refresh_sources(route_id, source):
         permit_source.save_development_permits()
     elif source == "zoning":
         zoning.download_zoning()
+    elif source.startswith('zoning-'):
+        from src.municipal_zoning import sources, download
+        key = source.removeprefix('zoning-')
+        if key not in sources():
+            raise ValueError('Unknown zoning jurisdiction')
+        download(key)
     elif source == "streets":
         basemap.load_seattle_streets(force_refresh=True)
     else:
         raise ValueError("Unknown data source")
 
 
+def analysis_route_data(primary, linked):
+    """Union the exploration corridor; retain distinct feed destination groups."""
+    groups = []
+    for label, data in [('43', primary), ('44', linked)]:
+        for grouping in data.get('stop_groupings', []):
+            if grouping.get('type') == 'direction':
+                for group in grouping.get('stopGroups', []):
+                    groups.append({**group, 'id': label + ':' + str(group.get('id', '')),
+                        'name': {**(group.get('name') or {}), 'name': label + ' · ' + (group.get('name') or {}).get('name', 'Destination')}})
+                break
+    return {**primary,
+        'stops': list({stop['id']: stop for data in (primary, linked) for stop in data['stops']}.values()),
+        'polylines': primary['polylines'] + linked['polylines'],
+        'stop_groupings': [{'type': 'direction', 'stopGroups': groups}]}
+
+
 def build_dashboard_data(route_id=first_hill.ROUTE_ID):
-    route_data = oba.load_route_data(route_id)
+    primary = oba.load_route_data(route_id)
+    linked = oba.load_route_data("1_100224") if route_id == "1_100223" else None
+    route_data = analysis_route_data(primary, linked) if linked else primary
     if not route_data["stops"]:
         raise ValueError("This route has no stops to display.")
     if not permit_source.DEVELOPMENT_PERMITS_FILE.exists():
         permit_source.save_development_permits()
     results = tod.analyze_route(
         route_id, first_hill.CATCHMENT_DISTANCE_FEET,
-        first_hill.START_DATE, first_hill.END_DATE, first_hill.FREQUENCY,
+        first_hill.START_DATE, first_hill.END_DATE, first_hill.FREQUENCY, route_data=route_data,
     )
     stops = results["physical_stops_gdf"].to_crs(tod.ANALYSIS_CRS)
     projects = results["projects_with_nearest_stop"].copy()
@@ -73,6 +97,7 @@ def build_dashboard_data(route_id=first_hill.ROUTE_ID):
     display_assignments = assignments.to_crs("EPSG:3857")
     lines = results["route_lines_gdf"].to_crs(tod.ANALYSIS_CRS)
     area = box(*gpd.GeoSeries([corridor, *lines.geometry], crs=tod.ANALYSIS_CRS).total_bounds).buffer(2000)
+    continuations = []
     display_area = gpd.GeoSeries([area], crs=tod.ANALYSIS_CRS).to_crs("EPSG:3857").iloc[0]
     streets = basemap.load_seattle_streets().to_crs(tod.ANALYSIS_CRS)
     streets = gpd.clip(streets, area)
@@ -81,16 +106,23 @@ def build_dashboard_data(route_id=first_hill.ROUTE_ID):
     dates = permits.IssuedDate.dropna()
     history = load_route_history(route_id)
     today = datetime.now(ZoneInfo("America/Los_Angeles")).date().isoformat()
+    zoning_data = zoning.route_zoning(stops, corridor, area, first_hill.CATCHMENT_DISTANCE_FEET, assignment_areas=assignments, direction_areas={k: v for k, v in access['areas'].items() if k != 'all'}, route_data=primary, development_frames=(projects, permits), continuation_data=linked)
+    from src.elevation import load_cached
+    for profile in (zoning_data.get('frontage') or {}).get('paths', []):
+        profile['directionKey'] = next((d['id'] for d in access['directions']
+            if d['id'].endswith(':'+str(profile.get('directionId')))), None)
+        profile['elevation'] = load_cached(route_id, profile)
     return {
         "routeName": "First Hill Streetcar" if route_id == first_hill.ROUTE_ID else route_id,
         "routeId": route_id,
+        "continuations": continuations,
         "catchmentFeet": first_hill.CATCHMENT_DISTANCE_FEET,
         "bounds": list(display_area.bounds),
         "catchments": {row.id: mapping(row.geometry) for row in display_assignments.itertuples()},
         "catchmentBounds": {row.id: list(row.geometry.bounds) for row in display_assignments.itertuples() if not row.geometry.is_empty},
         "catchmentLabels": {row.id: list(row.geometry.representative_point().coords)[0]
                             for row in display_assignments.itertuples() if not row.geometry.is_empty},
-        "zoning": zoning.route_zoning(stops, corridor, area, first_hill.CATCHMENT_DISTANCE_FEET, assignment_areas=assignments, direction_areas={k: v for k, v in access['areas'].items() if k != 'all'}),
+        "zoning": zoning_data,
         "transfers": stop_transfers(route_data, stops, route_catalog()),
         "directions": access["directions"],
         "directionNote": access["note"],
@@ -99,7 +131,7 @@ def build_dashboard_data(route_id=first_hill.ROUTE_ID):
         "directionCatchments": {key: {row.id: mapping(row.geometry) for row in
             area_frame(access, stops, key).to_crs("EPSG:3857").itertuples()} for key in access['areas']},
         "routeHistory": history,
-        "defaultPreset": "life" if history else "all",
+        "defaultPreset": "life" if history else "5y",
         "defaultStart": history["service_start_date"] if history else (dates.min().date().isoformat() if len(dates) else first_hill.START_DATE.date().isoformat()),
         "defaultEnd": today,
         "minDate": dates.min().date().isoformat() if len(dates) else None,
@@ -108,9 +140,9 @@ def build_dashboard_data(route_id=first_hill.ROUTE_ID):
         "route": [mapping(g) for g in results["route_lines_gdf"].to_crs("EPSG:3857").geometry],
         "corridor": mapping(gpd.GeoSeries([corridor], crs=tod.ANALYSIS_CRS).to_crs("EPSG:3857").iloc[0]),
         "stops": records(display_stops, ["id", "route_position", "name", "oba_stop_ids", "x", "y"]),
-        "projects": records(projects, ["OriginalAddress1", "Description", "IssuedDate",
+        "projects": records(projects, ["OriginalAddress1", "Description", "IssuedDate", "CompletedDate",
             "NearestStopId", "StopAssignments", "HousingUnitsAdded", "HousingUnitsRemoved",
             "HousingUnitsNet", "EstProjectCostNumeric", "StatusCurrent", "PermitTypeDesc", "UseHint",
-            "HousingCategory", "Zoning", "SourcePermitNumbers", "ReconciliationNote", "SupportingPermitValue", "x", "y"]),
-        "permits": records(permits, ["PermitNum", "IssuedDate", "NearestStopId", "StopAssignments", "StatusCurrent", "PermitTypeDesc"]),
+            "HousingCategory", "Zoning", "CurrentZoning", "SourcePermitNumbers", "ReconciliationNote", "SupportingPermitValue", "x", "y"]),
+        "permits": records(permits, ["Description", "CurrentZoning", "PermitNum", "IssuedDate", "NearestStopId", "StopAssignments", "StatusCurrent", "PermitTypeDesc"]),
     }

@@ -41,8 +41,70 @@ let socket;
     if (ready) break;
     await sleep(100);
   }
-  assert.ok(ready, 'dashboard must load');
+  assert.ok(ready, 'dashboard must load: '+await evaluate(`document.getElementById('status').textContent`));
+  assert.equal(await evaluate(`document.querySelector('.map-panel #route-summary')!==null`),true);
+  await evaluate(`document.getElementById('open-origin').click()`);
+  assert.equal(await evaluate(`document.querySelector('.mobile-route-picker').open`),true);
+  await evaluate(`document.querySelector('.route-sources button:nth-child(2)').click()`);
+  assert.equal(await evaluate(`document.getElementById('origin-dialog').open`),true);
+  await evaluate(`document.getElementById('close-origin').click()`);
+  assert.equal(await evaluate(`document.getElementById('origin-dialog').open`),false);
+  await evaluate(`document.getElementById('next-stop').click()`);
+  const firstStop=await evaluate(`document.getElementById('stop').value`);
+  assert.ok(firstStop);
+  assert.equal(await evaluate(`document.getElementById('previous-stop').disabled`),true);
+  await evaluate(`document.getElementById('next-stop').click();document.getElementById('previous-stop').click()`);
+  assert.equal(await evaluate(`document.getElementById('stop').value`),firstStop);
+  await evaluate(`document.getElementById('stop-summary').dispatchEvent(new PointerEvent('pointerdown',{pointerType:'touch',clientX:200,clientY:100}));document.getElementById('stop-summary').dispatchEvent(new PointerEvent('pointerup',{pointerType:'touch',clientX:100,clientY:100}))`);
+  assert.notEqual(await evaluate(`document.getElementById('stop').value`),firstStop);
+  await evaluate(`document.getElementById('summary-route').click()`);
+  const permitShares=await evaluate(`document.getElementById('zoning-pie-key').textContent`);
+  await evaluate(`document.getElementById('comparison-measure').value='added';document.getElementById('comparison-measure').dispatchEvent(new Event('change'))`);
+  assert.notEqual(await evaluate(`document.getElementById('zoning-pie-key').textContent`),permitShares);
+  assert.ok(await evaluate(`document.querySelector('#zoning-pie .comparison-inner').style.background.includes('conic-gradient')`));
+  await evaluate(`document.querySelector('.summary-zoning').open=true;document.getElementById('route-summary').scrollIntoView({block:'start'})`);
+  const wheelShot=await send('Page.captureScreenshot',{format:'png'});
+  fs.writeFileSync('/tmp/route-comparison-wheel.png',Buffer.from(wheelShot.data,'base64'));
+  await evaluate(`document.querySelector('.summary-zoning').open=false;document.getElementById('comparison-measure').value='permits';document.getElementById('comparison-measure').dispatchEvent(new Event('change'))`);
   assert.equal(await evaluate(`document.querySelectorAll('.stop-marker').length`), 10);
+  assert.ok(await evaluate(`document.querySelectorAll('#frontage-path option').length>=2`));
+  assert.ok(await evaluate(`document.querySelectorAll('#frontage-left span').length>0`));
+  await evaluate(`document.getElementById('frontage-lens').scrollIntoView({block:'center'})`);
+  const frontageShot=await send('Page.captureScreenshot',{format:'png'});
+  fs.writeFileSync('/tmp/route-explorer-frontage.png',Buffer.from(frontageShot.data,'base64'));
+  await evaluate(`document.querySelectorAll('.frontage-stop')[3].click()`);
+  assert.ok(await evaluate(`document.getElementById('stop').value.length>0`));
+  assert.equal(await evaluate(`document.querySelectorAll('.stop-marker[aria-pressed="true"]').length`),1);
+  assert.ok(await evaluate(`document.querySelectorAll('.frontage-stop[aria-pressed="true"]').length>0`));
+  await evaluate(`document.getElementById('clear').click()`);
+  const selectionBeforeProfile=await evaluate(`document.getElementById('stop').value`);
+  assert.equal(await evaluate(`document.querySelector('.profile-pin')`),null,'pin appears only while scrubbing');
+  await evaluate(`document.getElementById('frontage-position').value=600;document.getElementById('frontage-position').dispatchEvent(new Event('input'))`);
+  assert.ok(await evaluate(`!!document.querySelector('.profile-pin')`));
+  assert.ok(await evaluate(`document.getElementById('stop').value.length>0`),'scrubbing selects its nearest route stop');
+  assert.match(await evaluate(`document.getElementById('frontage-readout').textContent`),/Left:.*Right:/);
+  assert.equal(await evaluate(`document.getElementById('frontage-distance').hidden`),false);
+  assert.match(await evaluate(`document.getElementById('frontage-distance').textContent`),/mi$/);
+  await evaluate(`document.getElementById('frontage-position').dispatchEvent(new Event('change'))`);
+  assert.equal(await evaluate(`document.getElementById('frontage-distance').hidden`),true);
+  await evaluate(`document.getElementById('frontage-path').selectedIndex=1;document.getElementById('frontage-path').dispatchEvent(new Event('change'));document.getElementById('fit').click()`);
+
+  // One-time origins: manual fallback, success, denial and stale callbacks.
+  await evaluate(`document.getElementById('use-map-center').click()`);
+  for(let i=0;i<50;i++){
+    if(await evaluate(`!document.getElementById('origin-status').textContent.includes('Finding cached')`))break;
+    await sleep(100);
+  }
+  assert.match(await evaluate(`document.getElementById('origin-status').textContent`),/Map-center origin/);
+  await evaluate(`navigator.geolocation.getCurrentPosition=success=>success({coords:{latitude:47.60,longitude:-122.32,accuracy:35}});document.getElementById('use-location').click()`);
+  assert.match(await evaluate(`document.getElementById('origin-status').textContent`),/accuracy ±35 m/);
+  assert.ok(await evaluate(`document.querySelectorAll('#map circle[fill="#167bd5"]').length>0`));
+  await evaluate(`navigator.geolocation.getCurrentPosition=(success,fail)=>fail({code:1});document.getElementById('use-location').click()`);
+  assert.match(await evaluate(`document.getElementById('origin-status').textContent`),/permission was denied/);
+  await evaluate(`navigator.geolocation.getCurrentPosition=success=>window.pendingLocation=success;document.getElementById('use-location').click();document.getElementById('clear-origin').click();window.pendingLocation({coords:{latitude:47.60,longitude:-122.32,accuracy:10}});document.getElementById('fit').click()`);
+  assert.match(await evaluate(`document.getElementById('origin-status').textContent`),/Origin cleared/);
+  assert.equal(await evaluate(`document.querySelectorAll('.origin-results-row').length`),0);
+
   assert.ok(await evaluate(`document.querySelectorAll('.project-marker').length>0`));
   assert.equal(await evaluate(`document.querySelectorAll('.ownership-areas path,.stop-marker text,.stop-summary-marker').length`),0);
   await evaluate(`document.getElementById('project-status').value='issued'; document.getElementById('project-status').dispatchEvent(new Event('change'))`);
@@ -55,14 +117,14 @@ let socket;
   assert.equal(await evaluate(`document.getElementById('filter-dialog').open`), true);
   await evaluate(`document.getElementById('close-filters').click()`);
   assert.equal(await evaluate(`document.getElementById('filter-dialog').open`), false);
-  assert.match(await evaluate(`document.getElementById('active-context').textContent`), /Both \/ all directions.*Issued/);
+  assert.match(await evaluate(`document.getElementById('active-context').textContent`), /Permits since/);
   await evaluate(`document.querySelector('#project-rows .project-link').click()`);
   assert.equal(await evaluate(`document.querySelectorAll('.project-marker.selected-project').length`),1);
   assert.ok(await evaluate(`document.querySelectorAll('.top-stop').length>0`));
   assert.ok(await evaluate(`document.querySelector('.project-marker.selected-project').dataset.projectKey===document.querySelector('#project-rows .selected-project').dataset.projectKey`));
   assert.ok(await evaluate(`document.getElementById('map-project-info').textContent.length>0`));
   await evaluate(`document.getElementById('direction').selectedIndex=2;document.getElementById('direction').dispatchEvent(new Event('change'))`);
-  assert.match(await evaluate(`document.getElementById('active-context').textContent`), /Pioneer Square/);
+  assert.match(await evaluate(`document.getElementById('map-direction').textContent`), /Pioneer Square/);
   assert.match(await evaluate(`document.querySelectorAll('#stop option')[1].textContent`), /Denny/);
   assert.match(await evaluate(`document.querySelector('#ranking .bar-label').textContent`), /Denny/);
   assert.deepEqual(await evaluate(`Array.from(document.querySelectorAll('#ranking .stop-number'),n=>Number(n.textContent))`),[1,2,3,4,5,6,7,8,9,10]);
@@ -72,16 +134,31 @@ let socket;
   assert.match(await evaluate(`document.getElementById('stop-full-name').textContent`), /12th & Jackson/);
   assert.notEqual(await evaluate(`document.getElementById('stop-summary').textContent`), initialSummary);
   assert.equal(await evaluate(`document.querySelectorAll('.stop-marker[aria-pressed="true"]').length`), 1);
-  assert.equal(await evaluate(`document.querySelectorAll('.stop-marker text').length`),1);
+  assert.equal(await evaluate(`document.querySelectorAll('.stop-marker text').length`),0);
   assert.ok(await evaluate(`document.querySelectorAll('#transfers .connection-route').length>0`));
-  assert.match(await evaluate(`document.getElementById('transfer-note').textContent`), /Cached connections/);
+  const selectedSummary=await evaluate(`document.getElementById('stop-summary').textContent`);
+  await evaluate(`document.getElementById('summary-route').click()`);
+  assert.equal(await evaluate(`document.getElementById('stop-summary').textContent`),initialSummary);
+  assert.equal(await evaluate(`document.getElementById('summary-route').getAttribute('aria-pressed')`),'true');
+  await evaluate(`document.getElementById('summary-stop').click()`);
+  assert.equal(await evaluate(`document.getElementById('stop-summary').textContent`),selectedSummary);
+  assert.ok(await evaluate(`document.getElementById('zoning-pie').getAttribute('aria-label').includes('Land area')`));
   await evaluate(`document.getElementById('focus-stop').click()`);
   assert.ok(await evaluate(`Array.from(document.querySelectorAll('.project-marker')).every(n=>n.dataset.stopId===document.getElementById('stop').value)`));
   await evaluate(`document.getElementById('show-catchments').click()`);
   assert.ok(await evaluate(`document.querySelector('.catchment-spotlight').getAttribute('d').length>0`));
 
+  // Sparse selected-route schedules stay visible ahead of other frequent routes.
+  await evaluate(`window.departureFetch=window.fetch;window.fetch=async(url,options)=>String(url).startsWith('/api/departures')?new Response(JSON.stringify({selectedDepartures:[{route:'43',destination:'UW',departureTime:Date.now()+86400000,predicted:false,linkedTrips:[{relation:'next',route:'44',routeId:'1_100224',destination:'Ballard'}]}],otherDepartures:[{route:'10',destination:'Downtown',departureTime:Date.now()+300000,predicted:true}],scheduleSearched:true,notes:[]})):window.departureFetch(url,options);document.getElementById('load-departures').click()`);
+  for(let i=0;i<50;i++){if(await evaluate(`!document.getElementById('load-departures').disabled`))break;await sleep(100);}
+  assert.match(await evaluate(`document.getElementById('departures').textContent`),/Selected route/);
+  assert.match(await evaluate(`document.getElementById('departures').textContent`),/Other routes at this stop/);
+  assert.match(await evaluate(`document.getElementById('departures').textContent`),/44 toward Ballard/);
+  assert.match(await evaluate(`document.getElementById('departures').textContent`),/Scheduled/);
+  await evaluate(`window.fetch=window.departureFetch`);
+
   // Transfer to a cached line, arrive at its closest stop, then restore the old view.
-  const beforeTransfer = await evaluate(`({stop:document.getElementById('stop').value, view:document.getElementById('map').getAttribute('viewBox'), start:document.getElementById('start').value})`);
+  const beforeTransfer = await evaluate(`({stop:document.getElementById('stop').value, view:document.getElementById('map').getAttribute('viewBox'), start:document.getElementById('start').value, fraction:document.getElementById('frontage-position').value})`);
   const expectedTransferStop = await evaluate(`(async()=>{
     const source=await (await fetch('/api/data?route=23_102638')).json();
     const target=await (await fetch('/api/data?route=1_100039')).json();
@@ -92,12 +169,14 @@ let socket;
   for(let i=0;i<200;i++){if(await evaluate(`!document.getElementById('route').disabled`))break;await sleep(100);}
   assert.equal(await evaluate(`document.getElementById('route').value`),'1_100039');
   assert.equal(await evaluate(`document.getElementById('stop').value`),expectedTransferStop);
+  assert.ok(await evaluate(`Number(document.getElementById('frontage-position').value)>0`),'transfer initializes scrubber at geographic handoff');
+  assert.ok(await evaluate(`document.querySelector('.route-progress').getAttribute('d').includes('L')`),'route filled up to handoff');
   assert.match(await evaluate(`document.getElementById('map-route-title').textContent`),/14/);
   assert.equal(await evaluate(`document.getElementById('back-route').hidden`),false);
   await evaluate(`document.getElementById('back-route').click()`);
   for(let i=0;i<200;i++){if(await evaluate(`!document.getElementById('route').disabled`))break;await sleep(100);}
   assert.equal(await evaluate(`document.getElementById('route').value`),'23_102638');
-  assert.deepEqual(await evaluate(`({stop:document.getElementById('stop').value, view:document.getElementById('map').getAttribute('viewBox'), start:document.getElementById('start').value})`),beforeTransfer);
+  assert.deepEqual(await evaluate(`({stop:document.getElementById('stop').value, view:document.getElementById('map').getAttribute('viewBox'), start:document.getElementById('start').value, fraction:document.getElementById('frontage-position').value})`),beforeTransfer);
   assert.equal(await evaluate(`document.getElementById('back-route').hidden`),true);
   assert.ok(await evaluate(`(()=>{const svg=document.getElementById('map'), r=svg.getBoundingClientRect(), inv=svg.getScreenCTM().inverse(), p=new DOMPoint(r.left,r.top).matrixTransform(inv);const nums=document.querySelector('.catchment-spotlight').getAttribute('d').match(/-?[0-9]+(?:[.][0-9]+)?(?:e[+-]?[0-9]+)?/gi).map(Number);return Math.abs(nums[0]-p.x)<.01 && Math.abs(nums[1]-p.y)<.01})()`),'spotlight covers actual SVG viewport including letterboxing');
   assert.ok(await evaluate(`document.getElementById('ranking').scrollHeight>document.getElementById('ranking').clientHeight`));
@@ -117,7 +196,7 @@ let socket;
   assert.ok(await evaluate(`document.querySelectorAll('#annual-chart .chart-row').length > 0`));
   const annualBeforeClick = await evaluate(`document.getElementById('annual-chart').textContent`);
   await evaluate(`document.querySelector('#ranking .chart-row').click()`);
-  assert.match(await evaluate(`document.getElementById('annual-title').textContent`), /Development by issue year/);
+  assert.match(await evaluate(`document.getElementById('annual-title').textContent`), /by issue year/);
   assert.ok(await evaluate(`document.getElementById('annual-title').textContent.includes(document.getElementById('selection-title').textContent)`));
   await evaluate(`document.getElementById('sidebar-metric').value='permits';document.getElementById('sidebar-metric').dispatchEvent(new Event('change'))`);
   assert.equal(await evaluate(`document.getElementById('metric').value`), 'permits');
@@ -149,6 +228,14 @@ let socket;
     assert.equal(await evaluate(`document.getElementById('route').value`), routeId);
     assert.ok(await evaluate(`document.querySelectorAll('.stop-marker').length >= ${minimumStops}`));
     assert.equal(await evaluate(`document.getElementById('status').classList.contains('error')`), false);
+    if(routeId==='40_2LINE' && await evaluate(`document.getElementById('zoning-coverage').textContent.includes('Bellevue') && document.getElementById('zoning-coverage').textContent.includes('Redmond')`)){
+      assert.match(await evaluate(`document.getElementById('frontage-mix').textContent`),/Bellevue/);
+      assert.match(await evaluate(`document.getElementById('frontage-mix').textContent`),/Redmond/);
+      assert.match(await evaluate(`document.getElementById('zoning-coverage').textContent`),/Permit coverage is still Seattle only/);
+      await evaluate(`document.getElementById('frontage-lens').scrollIntoView({block:'center'})`);
+      const municipalShot=await send('Page.captureScreenshot',{format:'png'});
+      fs.writeFileSync('/tmp/route-explorer-municipal.png',Buffer.from(municipalShot.data,'base64'));
+    }
     if (routeId === '40_100479' || routeId === '40_2LINE') {
       assert.equal(await evaluate(`document.getElementById('start').value`), routeId === '40_100479' ? '2009-07-18' : '2024-04-27');
       assert.equal(await evaluate(`document.querySelectorAll('.project-cluster,.stop-summary-marker,.stop-marker text').length`), 0);
@@ -223,6 +310,14 @@ let socket;
   await sleep(100);
   await evaluate(`document.getElementById('map').scrollIntoView({block:'start'})`);
   assert.ok(await evaluate(`document.documentElement.scrollWidth <= window.innerWidth`), 'mobile page should not overflow horizontally');
+  assert.equal(await evaluate(`document.body.classList.contains('mobile-map-app')`),true);
+  await evaluate(`document.getElementById('open-origin').click()`);
+  assert.equal(await evaluate(`document.querySelector('.mobile-route-picker').open`),true);
+  await evaluate(`document.querySelector('.mobile-route-picker').open=false;document.getElementById('mobile-details').click()`);
+  assert.equal(await evaluate(`document.getElementById('mobile-detail-panel').hidden`),false);
+  await evaluate(`document.getElementById('mobile-close-details').click()`);
+  assert.equal(await evaluate(`document.getElementById('mobile-detail-panel').hidden`),true);
+  assert.ok(await evaluate(`document.documentElement.scrollWidth<=window.innerWidth`));
   const mobile = await send('Page.captureScreenshot', {format: 'png'});
   fs.writeFileSync('/tmp/route-explorer-mobile.png', Buffer.from(mobile.data, 'base64'));
   assert.deepEqual(exceptions, []);

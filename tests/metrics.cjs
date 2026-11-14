@@ -53,9 +53,6 @@ assert.equal(rankDifferences(chartRows)[0].gap, 2);
 assert.equal(annualChange([],[], '2025-01-01','2026-09-24','housing','2026-09-20'),null);
 assert.equal(annualSummaries([],[], '2025-06-01','2026-09-24')[0].name,'2025 (partial)');
 const {projectColor,groupProjectsByStop,projectPositions}=require('../web/map.js');
-assert.notEqual(projectColor({HousingUnitsAdded:0,PermitTypeDesc:'New'}),projectColor({HousingUnitsAdded:0,PermitTypeDesc:'Addition/Alteration'}));
-assert.notEqual(projectColor({HousingUnitsAdded:20}),projectColor({HousingUnitsAdded:21}));
-assert.notEqual(projectColor({HousingUnitsAdded:100}),projectColor({HousingUnitsAdded:101}));
 
 const {assignedStops,matchesStop,filterDevelopment}=require('../web/app.js');
 const shared={StopAssignments:{out:'a',back:'b'},x:1,y:1,SourcePermitNumbers:'1',StatusCurrent:'Issued',PermitTypeDesc:'New'};
@@ -97,3 +94,66 @@ assert.equal(stopDisplayNames([...corridorNames,{id:'branch',name:'48th Ave SW &
 assert.equal(stopDisplayNames([...corridorNames,{id:'east',name:'1st Ave S & S Hanford St'}]).h,'SW Hanford St');
 
 assert.equal(stopDisplayNames([...corridorNames,{id:'branch2',name:'48th Ave SW & SW Spokane St / SW Hanford St'}]).h,'California / Hanford');
+
+const {zoningColor,crowdedStopIds,housingZoningMismatch}=require('../web/map.js');
+assert.notEqual(projectColor({Description:'Construct ADU',HousingUnitsAdded:1}),zoningColor('Neighborhood Residential'));
+assert.equal(projectColor({UseHint:'Mixed-use indicated',HousingUnitsAdded:120}),zoningColor('Neighborhood Commercial'));
+assert.equal(projectColor({HousingUnitsAdded:120}),zoningColor('Midrise'));
+assert.equal(projectColor({Description:'Unspecified work'}),zoningColor('Master Planned Community'));
+assert.notEqual(projectColor({HousingUnitsAdded:1}),projectColor({HousingUnitsAdded:120}));
+const stopPoints=[{id:'a',x:0,y:0},{id:'b',x:20,y:0},{id:'c',x:100,y:0}];
+assert.deepEqual([...crowdedStopIds(stopPoints)],['a','b']);
+assert.deepEqual([...crowdedStopIds(stopPoints.map(p=>({...p,x:p.x*3})))],[]);
+assert.deepEqual([...crowdedStopIds([{id:'a',x:0,y:0},{id:'b',x:44,y:0}])],[]);
+for(const district of ['Seattle Mixed','Pioneer Square','International District','Master Planned Community — Yesler Terrace (MPC-YT)'])assert.equal(zoningColor(district),zoningColor('Neighborhood Commercial'));
+assert.equal(zoningColor('Master Planned Community'),zoningColor('Unknown / unmapped'));
+assert.notEqual(zoningColor('Seattle Mixed'),zoningColor('Unknown / unmapped'));
+assert.notEqual(projectColor({Description:'New detached dwelling',HousingUnitsAdded:1}),zoningColor('Neighborhood Commercial 2'));
+assert.equal(projectColor({StatusCurrent:'Expired',HousingUnitsAdded:50}),'#b7babb');
+const contrast={PermitTypeDesc:'New',Description:'Construct single family dwelling',CurrentZoning:'Lowrise 3'};
+assert.equal(housingZoningMismatch(contrast),'single');
+assert.equal(housingZoningMismatch({...contrast,CurrentZoning:'Neighborhood Commercial 2'}),'single');
+assert.equal(housingZoningMismatch({...contrast,Description:'Construct single family dwelling and ADU'}),null);
+assert.equal(housingZoningMismatch({...contrast,PermitTypeDesc:'Addition/Alteration'}),null);
+assert.equal(housingZoningMismatch({...contrast,Description:'Add one dwelling in existing apartment building'}),null);
+assert.equal(housingZoningMismatch({...contrast,Description:'Construct apartment building',CurrentZoning:'Neighborhood Residential'}),'reverse');
+
+// Route 9 / Orcas examples: expired housing must not inflate the default analysis.
+const orcasProjects=[{StatusCurrent:'Expired',HousingUnitsAdded:85,EstProjectCostNumeric:13330602},
+ {StatusCurrent:'Expired',HousingUnitsAdded:73,EstProjectCostNumeric:12831208},
+ {StatusCurrent:'Completed',HousingUnitsAdded:10}, {StatusCurrent:'Issued',HousingUnitsAdded:2}];
+assert.equal(summarize(filterDevelopment(orcasProjects,'',''),[]).added,12);
+assert.equal(summarize(filterDevelopment(orcasProjects,'all',''),[]).added,170);
+assert.equal(summarize(filterDevelopment(orcasProjects,'inactive',''),[]).added,158);
+assert.equal(filterDevelopment([{StatusCurrent:'Expired / Issued'}],'','').length,0);
+
+const {zoningCharacter}=require('../web/map.js');
+assert.equal(zoningCharacter('Neighborhood Commercial 3 [NC3P-75 (M)]'),'nc3p');
+assert.equal(zoningCharacter('Neighborhood Commercial 3 [NC3-75 (M)]'),'nc3');
+assert.equal(zoningCharacter('Commercial 1'),'commercial');
+assert.notEqual(zoningColor('Commercial 1'),zoningColor('Neighborhood Commercial 1'));
+assert.notEqual(zoningColor('Neighborhood Commercial 3 [NC3P-75 (M)]'),zoningColor('Neighborhood Commercial 3'));
+assert.equal(housingZoningMismatch({...contrast,CurrentZoning:'Neighborhood Commercial 3 [NC3P-75 (M)]'}),'single');
+
+const {zoningShimmers}=require('../web/map.js');
+assert.equal(zoningShimmers('Pioneer Square'),true);
+assert.equal(zoningShimmers('Seattle Mixed'),false);
+assert.equal(zoningShimmers('Neighborhood Commercial 3 [NC3P-75 (M)]'),true);
+
+assert.equal(zoningShimmers('International District'),true);
+assert.equal(zoningShimmers('Downtown Mixed'),false);
+
+assert.equal(zoningCharacter('Downtown Mixed'),'downtownMixed');
+assert.equal(zoningColor('Downtown Mixed'),'#3c51b2');
+assert.notEqual(zoningColor('Downtown Mixed'),zoningColor('Seattle Mixed'));
+assert.equal(housingZoningMismatch({...contrast,CurrentZoning:'Downtown Mixed'}),'single');
+
+{
+  const {basemapZoom}=require('../web/map.js');
+  assert.equal(basemapZoom(256*2**12,1),12);
+  assert.equal(basemapZoom(256*2**12*1.1,1),13);
+  assert.equal(basemapZoom(256*2**12,2),13);
+  assert.equal(basemapZoom(256*2**12,3),13);
+  assert.equal(basemapZoom(256*2**22,2),19);
+  console.log('Basemap resolution follows zoom and bounded screen density.');
+}

@@ -1,65 +1,193 @@
-# Route Explorer priorities
+Route Lens — Product Vision, Priorities, and Implementation Record
+Updated: 2026-10-08  
+Purpose of this file: Working product direction and prioritized implementation backlog for Route Lens. This is a guide for Codex and product decisions, not a demand to implement every idea immediately.
+Route Lens is an invitation, not an argument. It grows out of genuine enthusiasm for cities, transit, neighborhoods, and the pleasure of wandering. Users may just have fun in the app itself, enhancing their understanding of Seatle's geography. They may also discover buses, urban density, unfamiliar places, or urban planning along the way. Neither outcome is compulsory. The app must never feel like an activist tool, a transit-ridership campaign, or a sales pitch. Enthusiasm should emerge organically from a good experience.
+0. Product identity and operating principles
+Route Lens helps people discover, understand, and enjoy the city through its transit network. It asserts the axiom that transit (plus the last mile) is a sufficient tool for understanding a city. Routes are a way to experience places, not merely efficient paths between predefined origins and destinations. A bus that is not the fastest option can still be a wonderful way to spend an afternoon, visit a friend/visit with a friend, or discover a neighborhood. Transit brings people together.
+The creator is also a target user. Real recreational use and genuine curiosity—not just debugging sessions—should direct future development.
+Core experience
+1. Find a route, a place, or a question worth exploring.
+2. Browse or ride the route through the city with a responsive map and scrubber.
+3. Discover parks, landmarks, streets, neighborhoods, and surprising geographic patterns.
+4. Change lenses to see a place differently; investigate relationships and discrepancies.
+5. Optionally go deeper into zoning, development, TOD, civic processes, and other urban analysis.
+Non-negotiable experience principles
+- Joy and curiosity first. No lecture, virtue signals, forced tutorial, or predetermined conclusion.
+- Informative and engaging, not insisting on being fun Route lens is a resource. Even if game like components are eventually introduced, there will be no solicitation of fun energy, and minimal silliness. If silliness or absurdity appears, it will always be funny and read as absurd, not as a branding component.
+- The map remains the primary surface. Controls on mobile must be compact; temporary controls retract when finished.
+- Changing routes preserves place, where sensible, and feels reversible. The map, selected stop, route line, and scrubber must agree.
+- The entire mobile map interface owns the viewport, including persistent controls. Ordinary interactions must not leave it enlarged, offset, or inaccessible. Do not disable deliberate browser zoom.
+- A lens is a way of seeing, not an assertion of causation. Zoning, permits, built form, transit service, law, and experiences are distinct kinds of evidence.
+- Surface interesting discrepancies, but let users do the discovering. Be clear about dates, geography, data coverage, and uncertainty.
+- Do not build a public geography of undesirable people or neighborhoods. Collect trip/stop feedback broadly, but focus public experiential discovery on positively reported qualities. Physical infrastructure burden can be modeled independently of people's identities or reputations.
+- Acquire useful data before overbuilding controls. Resist implementing a complicated interface for speculative datasets.
+- Protect what already works. Completed features stay complete unless a concrete regression or unmet acceptance criterion is observed.
+1. Current decision and priority board
+Statuses mean: Implemented = locally built; Verify = requires real-device/live-feed or visual confirmation; Open = known gap; Explore = product/data research before implementation. Date-specific implementation statements are local checkpoints, not claims about production deployment.
+| Priority | Item | State | Next action |
+|---|---|---|---|
+| P0 | 28 — First-time experience, elevation, and in-app feedback | 28A/28B/28C implemented · Verify | Verify terrain on actual iPhone; preserve the guide and cached elevation profiles. Product feedback is implemented with a private durable queue. See Item 28 and docs/product-feedback.md. |
+| P1 | 29 — Data inventory and acquisition | Ready for source validation | Prioritize a validated elevation source required by 28B, then continue the supplied [`route_lens_data_sources.md`](route_lens_data_sources.md) inventory and cached Seattle Streets + SDOT Sidewalks + OSM parks/places ingestion. Reuse existing transit and permit pipelines. |
+| P1 | 25 — Route geometry regression | Implemented locally · Verify | Investigate duplicated end geometry on G Line; Route 10 is a known-good counterexample. Maintain fix for Route 217. |
+| P1 | 17 — Mobile viewport stability | Verify | Confirm on actual iPhone/Safari that selecting routes does not cause focus zoom, page drift, or offscreen controls; escalate if it blocks first use. |
+| P1 | 41 — Contextual ? and intentional stop inspection | Implemented locally · Verify | Verify contextual ? for stops, permits and active lenses on iPhone. Stop navigation now leaves the map open; general guidance stays reachable. |
+| P1 | 30 — Compact lens navigator | Explore | Design a small lens wheel/turret near route title that temporarily overlays map, then retracts. |
+| P2 | 24 — Map stop → scrubber synchronization | Implemented locally · Verify | Map stop selection now updates scrubber, filled route and terrain without recentering. Verify real-device behavior and retain repeated traversal occurrences. |
+| P2 | 26 — Mobile scrubber touch tolerance | Implemented locally · Verify | Verify the lower 44-pixel scrub target and off-track dragging on iPhone; the visible track and panel height are preserved. |
+| P2 | 31 — Ride-view catchment framing | Open | Prevent both sides of the route's catchment from being unintentionally cut off by auto-follow. |
+| P2 | 27 — Integrated scrubber layout | Explore, after 26 | Consider sandwiching route progress between left/right zoning meters; separately reconsider stop marker styling if warranted. |
+| P2 | 32 — Parks, landmarks, and everyday questions | Explore | Enable fun destinations and a geographically legible sense of places along routes. |
+| P2 | 33 — TOD analysis mode | Explore | Optional time-aware development and cross-route comparisons; never impose this on casual explorers. |
+| P2 | 34 — Trip/stop reports and experiential lens | Explore | Collect varied experiences; use positive experiences for public discovery. No public unpleasantness index. Separate from Item 28's immediate product-feedback mechanism. |
+| P2 | 35 — Civic contestation and legal events | Research | Map documented advocacy, political interventions, threatened legal action, appeals, and litigation with sources and dates. |
+| P2 | 36 — Comfort and transit flexibility | Explore | Infrastructure/exposure and service metrics for pleasant outings, scenic runs, and easy escape by transit. |
+Implementation discipline: First-use guidance (28A) and elevation (28B) have been implemented locally, with real-device verification still relevant. Product feedback (28C) is implemented; review incoming reports alongside real-device verification. Item 41 is a high-priority, contained improvement to the central exploration flow; coordinate it with existing ? behavior and do not reopen completed work unnecessarily. Do not make secondary geometry or gesture polish a prerequisite unless it blocks the main experience. Keep exploratory features as research until useful data and an actual user task are clear.
+2. Immediate bugs and interaction work
+17 — Stabilize the complete mobile viewport [P1 · VERIFY]
+The invariant is: when temporary UI is closed, the whole app frame—including zoom and route controls—fits inside the visible iPhone viewport. The document must not pan into blank horizontal/vertical space. Keep intentional pinch-zoom accessible. Do not offer a zoom-reset button.
+History: local changes included locking the document frame, preserving route-control DOM placement, removing document-level scrollIntoView, normalizing form typography, and refining first-touch search focus using focus({preventScroll:true}). A later Safari reproduction involved typing 217 and tapping the first result. The latest first-tap approach seemed fixed to the user, but the exact production/device behavior remains to be verified, including keyboard dismissal and repeated panel cycles. Preserve working behavior; do not reintroduce broad viewport-meta scale hacks without evidence.
+Test: On actual iPhone Safari: open app; search 217; tap a result rather than Return; close/reopen route info and stop panels repeatedly; switch routes; confirm stable scale, controls and document bounds. Test deliberate zoom separately.
+24 — Synchronize map-selected stops with the scrubber [IMPLEMENTED LOCALLY · VERIFY]
+Scrubber → map and route switch → geographically initialized scrubber already work. Map → scrubber does not: tapping a stop on the currently selected route leaves the progress marker/fill at the old position.
+Required: On map stop selection, update canonical selected stop, scrubber position, and filled primary-route progress. Respect direction. Stop selection must not itself activate ride-view zoom or force recentering; users already navigated to that point. Distinguish repeated occurrences of a physical stop if a traversal legitimately revisits it. Prevent event loops and redundant route/tile reloads.
+Test: Select stops alternately through map and scrubber; switch routes; select a transfer stop; verify line fill, selected stop, and scrubber always correspond.
+25 — Fix route-specific duplicated terminal geometry [P1 · IMPLEMENTED LOCALLY · VERIFY]
+Checkpoint (2026-11-14): the cached G Line feed puts both directions in one ordered stop group. Its 4.6-mile trace is now split into two approximately 2.3-mile traversals only when both substantial halves retrace at least 70% of the same corridor and endpoints return within 1,000 feet. Genuine loops and short terminal turns are excluded by the guardrails. Route 10 and 217 cached profile lengths remain unchanged. Visual verification remains; no deployment performed.
+Observed: Recent route-geometry work removed duplicated stop entries but appears to have reintroduced duplicated or extraneous end geometry on the G Line. Route 10 does not show the same problem; do not assume all routes fail. Separately, the Route 217 primary-versus-ghost geometry issue was addressed locally using ordered-stop tracing.
+Investigate: Overlapping directional paths, terminal loops, variant shape assembly, stop deduplication versus path occurrence, and ordered-stop tracing. Examine the displayed path, actual ordered stops, directional shape, and progress together. Do not merely hide repeated lines cosmetically.
+Design options: Prefer a correct single directional traversal. An intentional round-trip traversal could be explored if consistent, but must not be used as an automatic workaround: a round trip may revisit a physical stop, and adjacent directional trips need not form one continuous journey. Keep physical stop identity separate from occurrence along a traversal.
+Regression set: G Line (known bad), Route 10 (known good), Route 217 (previously fixed), branches, loops, short turns, and direction changes. Test that scrubber progression never jumps or follows irrelevant ghost geometry.
+26 — Expand the mobile scrubber's effective hit target [P2 · IMPLEMENTED · VERIFY]
+Observed: Gestures around the left/right zoning progress meters register readily; gestures initiating on the bottom portion of the scrubber are substantially less reliable. This may be uneven hit-area coverage, overlays, pointer-events, event propagation, or gesture handling—not a globally sluggish scrubber.
+Do first: Inspect actual mobile element bounds and touch event handling. Expand invisible hit area (initial target ~44–48 CSS px high where layout allows) without enlarging the visible control. Start a drag by touching track, thumb, or immediately surrounding intended scrub area; retain pointer capture through off-track drift. Respect vertical page gestures and adjacent controls. Verify on iPhone, including ends of track.
+27 — Explore alternative scrubber layout [P2 · DEPENDS ON 26]
+After resolving touch recognition, consider placing the route progress bar between the left and right zoning progress meters instead of below them. This could make one coherent horizontal gesture surface and save mobile vertical space. Reconsider stop markers separately if the composition warrants it; do not bundle a marker redesign with the touch bug. Prototype and assess clarity, readability, and thumb use before committing.
+31 — Frame ride view to preserve route catchment [P2 · OPEN]
+Current auto-follow sometimes positions the route so that some catchment area on one or both sides is outside the useful viewport. Consider viewport dimensions, overlay/control obstruction, catchment width, screen aspect, and nearby route direction in the camera target rather than blindly centering the stop. Preserve neighborhood-scale detail. Explicit user pan/zoom still overrides follow behavior.
+3. First-time experience: make route geography legible, then collect feedback
+28 — First-time experience, elevation, and in-app feedback [P0 · 28B/28C VERIFY]
+Goal: Make Route Lens understandable and inviting to someone opening it for the first time, using the map and data we already have. Do not wait for Item 29 or the lens-wheel redesign. The founder is a target user, but founder observation is not a substitute for an actual in-app user-feedback mechanism.
+Observed first-load problem (Max): The First Hill Streetcar appears with colored permit/development dots and a colorful scrubber. Neither is self-explanatory. Tapping a permit clarifies its meaning, but users need a small cue to begin. Zoning is off by default even though the zoning meters are prominent in the scrubber.
+28A — Implemented locally: compact contextual ? control and useful first-open explanation.
+- Put a discoverable but visually quiet ? control in the existing map/route interface. It must work on mobile without permanently consuming valuable map space, and remain reopenable whenever wanted. No blocking tour, full-screen takeover, forced sequence, or cookie-based new-user detection required for v1.
+- On activation, show a compact, dismissible panel explaining what the colored dots represent (recorded permit/development activity, not necessarily completed buildings), what scrubbing does (travel along the route and see the map change), and how to inspect a dot (tap for context). Use plain language and match current actual controls.
+- Include the selected route name and, when verified metadata exists, its opening date and the development-data window currently shown. Distinguish route opening, permit issue, and actual project completion; do not imply that every permit or development was caused by transit. Label zoning Current zoning with data vintage when available.
+- On the First Hill Streetcar, offer a few concise, optional prompts that direct attention without providing conclusions: How do places change along the route? Where is development concentrated? What has changed since service began? These are invitations to observe, not hardcoded lesson answers.
+- Keep the visible interface itself as legible as possible: decide whether enabling zoning at first load improves the relationship between the map and the zoning meters; test before making it the default. Help content should not be the only means of understanding core controls.
+- Do not narrate that a First Hill rapid-transit gap exists, claim that streetcar-induced TOD is proven, or present a predetermined political interpretation. Later map layers may make terrain, I-5 crossings, service geography, medical land use, neighborhood differences, and changes over time discoverable. Those are not prerequisites for 28A.
+28A acceptance: A first-time visitor can identify what the dots mean, discover how to scrub and inspect a permit, close the help panel, continue exploring, and reopen help on both desktop and mobile. No new external dataset and no account are required.
+Local checkpoint (2026-10-08): 28A implemented with a reopenable ? guide, route opening source when available, live permit issue-date window, First Hill observation prompts, and optional zoning effective/retrieval dates. The map toggle is labeled Current zoning. Desktop/mobile guide and viewport checks pass; phone screenshot reviewed. Zoning remains off by default pending comparative testing. No deployment performed; actual iPhone review remains. Elevation (28B) and in-app product feedback (28C) remain open.
+28B — Route-aligned elevation profile [IMPLEMENTED LOCALLY · VERIFY].
+- Elevation should reveal the shape of Seattle's terrain through the route itself, beginning with the First Hill Streetcar. Let users notice its steep ascent without a narration about why the line exists or what conclusions to draw.
+- Find and validate a suitable public elevation model or service for Seattle; document source, resolution, vertical datum/units, licensing, and coverage. Do not mistake road-segment percent slope for a continuous elevation profile, and do not make the founder manually find a dataset already obtainable from public sources.
+- Sample elevations along the selected directional route geometry at meaningful, consistent intervals and at ordered stops. Cache/precompute the resulting profile per route/direction where practical. Do not regenerate geographic tiles or refetch elevation continuously as the scrubber moves.
+- Integrate a legible elevation trace with the existing route scrubber or an equally compact, temporary map-native view. Visually synchronize current scrubber progress, selected stop, corresponding profile position, and map location in both directions. Keep the map primary on mobile and avoid increasing the persistent control footprint unnecessarily.
+- Show elevation units and meaningful vertical change. Do not visually exaggerate shallow gradients without an intelligible scale; where vertical exaggeration is needed for readability, make the scaling understandable. Handle missing coverage without invented elevations or a false zero.
+- Respect route direction, loops, repeated stop occurrences, and any known geometry anomalies (Item 25). Do not allow incorrect G Line path reconstruction to masquerade as elevation behavior. Preserve manual map-pan/zoom overrides, route caching, and current mobile viewport guarantees.
+- Elevation is its own first useful geographic addition. Do not block it on the complete lens wheel (Item 30), the broader streets/parks ingestion of Item 29, or the feedback mechanism (28C). The eventual lens navigator should be able to expose this feature later.
+28B acceptance: On First Hill Streetcar, a visitor can scrub the line and perceive the ascent and descent, relate their route position to elevation and stops, and continue using the mobile map comfortably. A second topographically different route must demonstrate the approach is generic rather than hard-coded to First Hill. Verify data provenance and mobile responsiveness; test without relying solely on static screenshots.
+Local elevation checkpoint (2026-10-08): 28B implemented with cached USGS 3DEP terrain for both First Hill and South Lake Union Streetcar directions. The verified pilot DEMs report 1-metre resolution, NAVD88, and WA_KingCounty_2021_B21 provenance. The Elevation/Current zoning switch reuses the existing profile area. Route-distance, terrain cursor, selected physical stop and filled route synchronize in both directions; map-stop selection preserves camera position. Explicit repeated ordered stops retain traversal occurrences. Missing samples and section breaks remain gaps; geometry changes invalidate cached terrain. No elevation requests occur while scrubbing. All 69 Python tests, JavaScript elevation/geometry/metrics checks and desktop/mobile elevation, guide, viewport, permit and broad route browser checks pass. Mobile screenshot reviewed; actual iPhone behavior and deployment remain unverified. See [elevation data notes](elevation-data.md). The reported G Line geometry anomaly (25) remains open; no elevation cache was generated for it.
+Elevation rollout checkpoint (2026-10-08): The streetcar deployment cache mismatch was fixed and the user confirmed the result looks good. Prepared 107 profiles across 54 routes with cached transit geometry (68,089 samples; no gaps or remaining preparation failures). G Line stays excluded pending Item 25; 338 other catalog routes need transit geometry acquisition first. Resumable catalog preparation and atomic failure reports are implemented. Cache lookup also handles equivalent GEOS path tessellation by verifying every terrain query location, chainage and section break. Validation: 78 Python tests, JavaScript terrain/geometry checks, live desktop/mobile Route 10 and Route 217 browser checks, and live API checks for the streetcars, Link 2 Line and combined Route 43/44. See [elevation data notes](elevation-data.md) for rollout and provenance details.
+28C — Ship after elevation: lightweight in-app product-feedback mechanism.
+- Add a clearly findable Send feedback action, reachable from ? or an equally unobtrusive existing control. This is a real submission path, not a mock form, mailto-only dead end, or instruction to tell the founder offline.
+- Collect the smallest useful payload: feedback category (confusing interface, bug, missing information/feature, something interesting I noticed, other), optional free text, and optional automatically populated route/stop/lens context. Show that context before sending; allow the user to omit it. Do not require an account or continuous location tracking.
+- Use a working backend endpoint or a clearly configured supported collection service, with basic rate limiting/spam protection, validation, a retention policy, and a private place for the developer to read incoming feedback. Never publish submissions automatically. Do not silently discard reports or claim successful receipt without storage confirmation.
+- Provide meaningful submission success/failure feedback; verify mobile keyboard/panel behavior and test end-to-end persistence/retrieval. If a backend or collection destination is not configured, document exactly what configuration is missing rather than presenting a nonfunctional button as complete.
+- This is product feedback about using Route Lens, distinct from Item 34's future structured trip/stop experience reports and public positive-experience lens. Do not conflate them.
+28C acceptance: A visitor can report confusion or an idea while using a route; the submission reaches a retrievable private queue with its optional context, without needing to leave the app.
+28D — Iterate from actual use, not speculation. The founder and other visitors use the live app to explore routes or plan real outings (e.g. an unfamiliar neighborhood, beach trip, scenic walk/run home, afternoon with a friend). Review feedback to distinguish the UI made this difficult from the app lacks information needed to answer the question. Improve the opening based on actual reports. This is a follow-on practice, not a substitute for 28C's deliverable.
+Future depth, not first-load copy: The First Hill Streetcar can invite discoveries involving Pioneer Square, the International District, Yesler Terrace, First Hill's medical campuses and grade, Pike/Pine, highway barriers, and development over time. Eventually connect permits to stops in space and time, and let users compare planning/construction/opening milestones where sourced. Do not build these analyses into the initial ? panel or claim causal conclusions unsupported by data.
+41 — Contextual ? button and intentional stop inspection [P1 · IMPLEMENTED · VERIFY]
+Goal: Expand the existing, reopenable ? guide into one consistent way to ask about whatever is presently being examined. Keep the map primary and permit casual scrubbing without full stop-details overlays. Reuse existing help and stop-detail components; do not add another permanent map control or redesign the entire information UI.
+- Selection is not inspection. Moving the scrubber to a stop (including tapping a stop marker once) updates the map, route fill, current stop and the existing bottom stop-name label; the elevation lens may continue to add elevation in the selected unit. Do not automatically open the full stop-details/zoning panel or obscure the selected stop. A single tap on a map stop likewise selects without requiring a modal. Preserve current map camera and manual zoom/follow preferences.
+- The ? button is contextual. On activation, prefer an explicitly inspected entity (permit, stop, zoning feature, future landmark), then an explicitly selected stop, then the current lens, route and general help. Distinguish ordinary scrubber progress from explicit inspection so simply riding a route does not permanently turn ? into stop-details-only help. Provide a clear path back to general guidance from any context.
+- Keep information in one place. For a stop, ? should open the existing detailed stop information (connections, zoning/development and other existing content) rather than create a duplicate small card; for a permit, show the existing permit details and provenance; for an active lens/route, explain the visible data and its vintage/limits when known. Do not fabricate missing descriptions or metadata.
+- Deliberate shortcuts: Desktop double-click on a scrubber stop may open stop details; mobile double-tap can be optional, but neither should be the only way. ? or an explicit accessible Details action must work by tap, keyboard and screen reader. Prevent double-click/drag conflicts and accidental popups.
+- Dismissal and state: Closing help/details returns to the unobstructed map with route, position, zoom and active lens intact. If a user opens detail and then changes stop, do not display stale data; choose and document whether details follow the new stop or close. Do not reopen automatically on subsequent scrubs.
+- Responsive behavior: Keep existing bottom stop label; no second persistent stop-name affordance. Panels should be compact on mobile, dismissible, and consistent with the canonical full-screen viewport (Item 17).
+Acceptance: Scrub repeatedly and tap stops without opening a blocking panel; ? offers relevant help for selected route, stop, permit or lens; general guide remains reachable; close and resume without camera drift, stale details, or altered scrubber progress. Test desktop click/double-click, mobile tap/drag, keyboard, and changes of route/lens while detail is open.
+30 — A mobile-first wheel of lenses [P1 · DESIGN]
+A lens wheel/turret near the route name, inspired by optometrist lenses or a camera's revolving lens selector. The selector should briefly expand over the map, rotate or swipe through lenses, then retract to a compact icon/active-lens indicator. A persistent tiled palette consumes too much mobile screen. Make the metaphor visually meaningful rather than decorating a standard dropdown.
+Potential lenses: Current zoning, recent development, housing, parks/places, street character/width, elevation/slope, greenery, transit accessibility, experiential pleasantness; historical/legal data and TOD mode are deeper options. Start with one thematic lens at a time; layered or A/B comparison may come later. Separate lenses (how to see) from questions (what to explore). Map shows location, scrubber may show change along route, and route details explain or summarize; each lens does not need all three.
+Important: Do not implement empty lens slots or speculative controls before useful data exists.
+4. Acquire, assess, and integrate more geographic data
+29 — Data acquisition is a high-priority product workstream [P1]
+Begin with [`route_lens_data_sources.md`](route_lens_data_sources.md), the supplied source manifest. Codex should validate the documented URLs, service availability, field schemas, licenses, and coverage—not ask the founder to rediscover those sources. First deliverable: a bounded, reproducible, cached and tested prototype ingesting Seattle Streets, SDOT Sidewalks, and OpenStreetMap parks/places. Explicitly verify available street width/slope and sidewalk width fields; reuse the existing transit and permit pipelines. Treat fine-grained elevation, citywide canopy, building stock, and advanced accessibility indicators as staged follow-on research, not dependencies. Record provenance and missingness, and never present proxies as direct measurements.
+Create data_inventory.md (or equivalent) and evaluate each candidate by: provider/license, reliable access method, geometry type, coverage, temporal vintage/update cadence, missingness, granularity, join strategy to route/stop/catchment, likely mobile performance, and an actual user question it supports. Prefer reproducible downloads and locally cached/preprocessed geometry over fragile live requests. Codex should research available public datasets/APIs rather than automatically requiring the founder to hand over every source. Still verify terms and data suitability; do not invent endpoints.
+Candidate themes, roughly in order:
+1. Parks and meaningful places: Parks, beaches, public spaces, landmarks/POIs, and named neighborhoods using Seattle open data and OpenStreetMap where appropriate. Examples to test: Seattle Center, UW Rainier Vista, Pike Place Market, Pioneer Square, Volunteer Park water tower, Ballard Locks, Pike/Pine, Fremont Troll. Determine whether each belongs as a subtle map annotation, scrubber tick, or route-details entry; avoid overcrowding every surface.
+2. Street conditions: Street surface width, sidewalk availability/width, street classification, road speed, traffic volume, crossings, bridges/underpasses, pedestrian separation. These underpin comfort without relying on crowdsourced stigma.
+3. Terrain and greenery: Elevation, grade, topography, tree canopy and inventories, parks; canopy and actual shade are distinct.
+4. Transit accessibility: Stop distance by walkable network, scheduled headways, service span, next useful arrival, transfer options, real-time departures. Nearby stop ≠ frequent service. Account for uncertainty in predictions.
+5. Existing built form: Building footprints, heights, parcels, housing stock and historical context. Permit history is a proxy for change, not a complete inventory of existing buildings; older stock and non-permitted changes are missing.
+6. Exposure/weather: Traffic pollution/noise proxies, sun exposure, rain shelter/awnings, wind exposure where reliable enough. Avoid implying that modeled exposure equals measured personal exposure.
+7. Planning/legal history: Prior and proposed zoning, key planning milestones, legal challenges, hearings, and documented advocacy—see Item 35.
+Start by making a few of these valuable in the existing map and scrubber before building a recommender system.
+Zoning and what it can explain
+Zoning is a powerful compact proxy for urban form and some aspects of walkability, but not a photograph of current conditions, an assurance of transit service, or a direct measurement of pleasantness. In Seattle, the pedestrian P designation gives zoning additional predictive relevance for pedestrian-oriented frontage; preserve this information rather than flattening it away. The relationship between regulation, built environment, and experience is historical and correlational, not a universal causal chain.
+Label the default layer Current zoning and make its data vintage explicit. Distinguish current adopted zoning from proposed zoning. Zoning can change; historical analysis must not pretend that today's designations applied in the past. Differences between zoning and permits, building form, or lived experience may be precisely what is worth investigating.
+Madison Valley example: Dense residential/ADU permitting may suggest an interesting pattern relative to established urban form or zoning. Test the pattern against other areas and normalize for eligible parcels/time before claiming it is unusual. A cluster of permits is not by itself proof of latent demand, zoning-caused constraints, or completed homes. Help people notice and investigate, rather than announce conclusions.
+5. Longer-horizon experiences and analytical lenses
+32 — Places and questions that are intrinsically fun [P2]
+Use real places along routes as an invitation to explore, not a giant overlay of every OSM point. Candidate questions:
+- Which bus takes me to the beach?
+- Where could I go for a beautiful run or walk home?
+- What's interesting along this route?
+- Where could two friends meet using transit from different neighborhoods?
+- What's somewhere unfamiliar I could enjoy this afternoon?
+Discoverability should not require the user to know a destination first. Distinguish destination discovery from routing. Making the city more social and transit more familiar is a hoped-for consequence, not an instruction or performance metric imposed on users.
+33 — Optional transit-oriented development (TOD) analysis [P2]
+A deliberate TOD lens/mode, rather than an unexplained default analytic view. Show what time period development dots represent; identify service opening date and how long the line has been open. Permit date, completion date, and route-planning/construction/opening dates must remain distinct.
+Explore: pre-planning baseline, planning/announcement, construction, first years of service, and longer-run post-opening windows; comparable calendar/time-since-opening windows across lines; permit count, housing-unit additions, estimated construction value; per-mile/per-acre/per-year normalized comparisons; bursts versus sustained development. Permit data indicates recorded activity and cannot alone establish transit-caused development. Different lines may need different availability rules or caveats.
+Enable direct comparison between routes eventually, rather than forcing users to remember one map while opening another. Keep causal claims appropriately modest. Preserve metric hierarchy: Development → permits, housing units, construction value; zero and unavailable are distinct.
+34 — Trip and stop reports; eventually an experiential pleasantness lens [P2]
+Separate from Item 28C: These are reports about actual transit/stop experiences for possible later analysis and experiential discovery; Item 28C is immediate in-app feedback about Route Lens itself.
+Begin with modest voluntary trip and stop reports, inspired by transit-agency feedback mechanisms. Collect a broad range of concrete positive, negative, and neutral experiences: access/boarding, service, infrastructure, comfort, memorable places, beauty, helpful encounters, etc. Distinguish observed events from subjective impressions. Moderate free text, minimize personal/location-history collection, and protect against revealing sensitive information about identifiable people.
+Public-facing product choice: Use positive observations to help discover scenic, interesting, comfortable, delightful places and journeys. Do not create an unpleasantness index, dangerous-neighborhood score, or public map that marks people or areas as cursed. Pleasantness and unpleasantness need not be opposite ends of one continuum; a place can possess both positive and difficult qualities. Absence of positive reports is simply absence of evidence, not a negative rating. User experiences are voluntary and nonrepresentative, so show source/sample context before aggregating.
+Negative/neutral trip and stop reports can remain operational feedback, not inputs into a geographic unpleasantness score. Avoid automatically publishing raw reports. An eventual experiential metalens could compare positively reported experience with parks, trees, zoning, streets, or transit data—but should not turn user reports into stigmatizing judgments.
+35 — Civic action, legal challenges, and invisible urban forces [P2 · RESEARCH]
+Not just filed litigation: organized advocacy, individuals, business collectives, public testimony, threats of legal action, administrative appeals, political negotiations, and lawsuits can shape corridors. Represent documented actors' actions related to a project/area and date, not permanent moral labels on organizations or neighborhoods.
+Possible source categories: Seattle Hearing Examiner decisions/records, municipal agendas and testimony, public legal filings, agency project histories, and sourced statements from advocacy/business organizations. For each claim store source, date, geography, actor, objective, action type, procedural status, and verified outcome when known.
+Carefully distinguish filed action, publicly stated intention, and hypothesized influence. Do not claim that a threatened suit or protest caused redesign/delay without evidence. This lens could reveal what was proposed, contested, altered, or never built; it is not an advocacy or opposition score.
+36 — Comfortable, flexible journeys based on infrastructure [P2]
+Goal: help people avoid physical conditions they personally find difficult: high-speed traffic beside tiny sidewalks, unsafe or unpleasant crossings, traffic-related pollution/noise, sun/rain/wind exposure, and the feeling of being stranded far from frequent transit. These can often be approached via infrastructure and schedule data without asking people to rate a neighborhood.
+Keep measures separate rather than collapsing them into a universal good/bad score. For example:
+- Spatial isolation: distance to useful services, connected pedestrian routes, and reachable stops.
+- Temporal isolation: wait until the next useful departure, frequency and service span.
+- Pedestrian burden: crossing distance, speed/volume proxies, sidewalk conditions, grade.
+- Exposure: traffic and environmental proxies, trees, shelters, weather, with uncertainty.
+Future example: take a bus out, run 4–6 scenic miles home, and keep frequent-transit options nearby in case I want to bail out. Users should be able to express their own preferences or accessibility constraints. Do not claim a road-class/noise proxy is a direct personal pollution measurement.
+6. Completed work and verification ledger (original items 1–23)
+Keep this section so agents do not repeatedly reimplement completed work. Detailed requirements were established in earlier priorities.md; the statuses below reflect the last local implementation report, not confirmed deployment.
+| Items | Prior work | Checkpoint |
+|---|---|---|
+| 1–4 | Route filtering and selection: Routes near me, Routes near a point, All routes within main selector; location changes choices, not route | Implemented locally by 2026-10-07 |
+| 5–8 | Preserve map context, cache tiles/layers and recently loaded route/stop data; avoid redundant backtracking fetches | Implemented locally; retain tile/layer lifecycle |
+| 9–12 | Search focus handling, remove header text-size control, compact modal controls, collapse connections above four | Implemented locally; live mobile verification ties to 17 |
+| 13–15 | Estimated construction value terminology, unavailable ≠ $0, development metric hierarchy | Implemented locally |
+| 16 | Five recent distinct routes; reversible selection, no false history from highlighted/failed results | Implemented locally |
+| 17 | Canonical full-screen mobile viewport | Verify; see active item |
+| 18 | Scrubber enters close ride view, honors manual override/reduced motion, retains layers | Implemented locally; tune camera with 31 |
+| 19 | Compact permit callout with address, explicit completion-year label when appropriate, work type, meaningful housing/value; tap-away | Implemented locally |
+| 20 | New route initializes near selected stop/ride location, filled progress, direction and Back restoration | Implemented locally; synchronize with 24 |
+| 21 | Residential permit dots changed to muted rose/mauve to contrast with OSM while retaining soft overlapping blotches | Implemented locally; visual tuning on iPhone useful |
+| 22 | Route 217 primary/ghost route geometry repaired using connected ordered-stop tracing | Implemented locally; watch for regression with 25 |
+| 23 | Tap selected permit ring twice to dismiss callout; tap different permit to replace; no close button | Implemented locally |
+Prior test report (2026-10-08): 64 Python tests, JavaScript geometry/metrics/cache/origin/history checks, desktop/mobile browser smoke, ride/callout toggle, viewport and route-selector checks passed locally. Covered transfer initialization, Back restoration, G Line, routes 2/8/50, Link lines and callout toggling. Browser geographic tiles were disabled in some tests. This report does not override newer user-observed G Line geometry failures, nor prove actual iPhone/Safari behavior. No deployment was performed in that session.
+7. Product decision log and guardrails
+- Do not reinstate a separate Nearby rides screen, route-history confusion, header font-size toggle, or reset-zoom button.
+- Do not add marker outlines to the residential permit blotches merely to gain contrast; the blended watercolor-like aesthetic is intentional.
+- Do not equate repeated physical stop occurrences with geometry duplication. Fix path assembly based on actual traversals.
+- Do not make the TOD story or institutional/activist motivation the opening sales pitch.
+- Do not assume all routes have a shared historical window, that permits equal construction, or that zoning equals built form.
+- Do respect open exploration, including playing with the scrubber and looking at geographic patterns without a specific destination.
+- Do allow users to make unexpected discoveries and draw conclusions while providing enough context not to mislead them.
+- Do take seriously that maps and recommendations can change where people go; avoid stigmatizing places or people.
+- Do let actual founder/user experience and observed regressions adjust priorities rather than treating this numbering as an immutable sequence.
+North star: Route Lens should be enjoyable for someone who never becomes interested in urban planning—and rewarding for someone who unexpectedly does.
 
-Updated 2026-09-25 after the rider-focused prioritization discussion. The original
-map/assignment iteration is complete. The user authorized the next development
-slice: map clarity and fluid exploration (priorities 1–2 below).
+Interaction checkpoint (2026-10-08): Items 41 and 26 implemented. Stop selection and scrub progress no longer open mobile details automatically. Explicitly selected stops use ? to open the existing stop details; permit inspection expands the existing callout with provenance. Elevation/current-zoning help includes existing source metadata, and general guidance remains reachable from each context. Desktop double-click on a profile stop opens details. New stop, route or lens navigation closes old details; keyboard opening/Escape and dismissal preserve the map view. The lower scrubber has an invisible 44-pixel drag surface without changing the visible track or persistent panel height. Pointer capture retains off-track drags; pointer release/cancel ends the gesture. Desktop/mobile contextual-help, guide, terrain and viewport checks pass; actual iPhone touch verification remains. Product-feedback submission (28C) is implemented; see the checkpoint below.
 
-| Priority | Scope | Status |
-| --- | --- | --- |
-| 1 | Prominent route identity, route-context stop names, optional explained assignment polygons, viewport-wide spotlight, corridor-wide projects, consistent comparison metrics and map leaders | Complete; automated checks and desktop/mobile visual review passed |
-| 2 | Compact independently scrolling panels, clickable connecting lines, nearest-stop arrival, Back restoring prior route/stop/filters/map view | Complete; automated checks and desktop/mobile visual review passed |
-| 3 | Nearby routes from a chosen origin; walking and boarding direction; frequency/next departures; single-route time-budget exploration | In progress: cached connections and boarding direction complete; live next departures underway; walking validation, frequency and time budgets remain |
-| 4 | Small destination pilot: parks, verified public waterfront and street-end beach access, concise creator notes | Deferred |
-| 5 | Development application/issuance/completion/occupancy timelines; explicit date basis and clickable years; ridership context | Deferred; local ridership cache audit recorded below |
-| 6 | Tree canopy, scenic/elevation views, transit travel-time variability and traffic context | Deferred |
+Feedback checkpoint (2026-10-08): Item 28C implemented with category, optional text and a preview of optional route/stop/lens context. Confirmed SQLite commits produce receipts; retries avoid duplicates and failures preserve drafts. Validation, basic rate limiting, a honeypot, private CLI reading and automatic 90-day retention are implemented. Hosted storage requires the /feedback persistent volume. All 85 Python tests and desktop/mobile feedback browser checks pass locally. Actual iPhone keyboard verification remains. See docs/product-feedback.md for private retrieval and storage configuration.
 
-## Near-term refinement deck
-
-1. **Focus a selected stop automatically.** Selecting a stop from the sidebar,
-   including after noticing a high housing total, should zoom and center the map
-   on that stop. The current highlight without automatic focus is insufficient;
-   the separate **Focus selected stop** button should not be required for this path.
-2. **Recalibrate project-point housing colors.** Replace the current housing-added
-   bands with **1–5, 6–20, 21–50, 51–150 and 151+ units**. Keep distinct treatments
-   for zero-unit projects and projects whose unit count is not recorded.
-3. **Fix the project lens at wide zoom levels.** Review the project display and
-   selected-project treatment when the map is zoomed out; it currently looks
-   visually awkward and should remain legible without overwhelming the route.
-4. **Make stop markers easier to see and select.** Increase their visual contrast
-   and pointer target. Test a distinct color, larger visible marker, different
-   shape or a combination while keeping stops distinguishable from project points.
-   The clickable target should be comfortably larger than the visible symbol.
-
-Time-budget exploration: 30 minutes, one hour or two hours, one-way or round trip,
-from a selected stop and departure date/time. Show farthest reachable stops in each
-actual destination direction; uptown/downtown can supplement where meaningful.
-Distinguish waiting, riding and optional walking. Return travel must use actual
-return service rather than half the outward budget. Allow time at the destination.
-Start with a single route before adding transfer itineraries.
-
-Reachability geography (water, hills, crossings, stairs and station entrances)
-belongs in priority 3; scenic geography belongs with exploration. Proposed
-interface purposes remain Ride, Explore and Development, sharing selection,
-route identity and navigation. More layers should answer a concrete rider question.
-
-## Stop naming decisions
-
-Display names may omit the corridor street when the remaining name identifies the
-stop on the whole route, including branches and oxbows. Preserve compass qualifiers
-or both streets when needed. Retain full source names in details and tooltips.
-On the cached Route 50, California & SW Hanford becomes **SW Hanford St** because
-there is also a stop at 1st Ave S & S Hanford St. California/Admiral collapses the
-reversed platform names but retains both streets because both recur on this route.
-
-## Ridership audit
-
-No ridership dataset or ridership loader was found in this checkout's data folders,
-analysis/source code or matching Git history filenames. Available local data cover
-transit route/stops, permits, streets, zoning and route history. The previously
-mentioned download may exist elsewhere; its source, reporting periods, measure
-and route-ID mapping remain unverified. No ridership values are displayed. Missing
-coverage must remain unavailable rather than zero; First Hill's absence should
-not block supported routes when a source is recovered.
-
-See [implementation and methodology notes](mvp-update-notes.md) for assignment
-rules, cache limitations and validation details.
+Feedback deployment checkpoint: Deployment 38f98f98-f835-4c69-a24c-104df3710568 reached SUCCESS with the /feedback volume Ready. Desktop/mobile feedback checks also passed against the live app with committed receipts. Private production retrieval and redeploy survival were subsequently verified for both automated receipts after deployment 7ec09359-eb34-4603-a50f-5dc4e0e7697f reached SUCCESS. IDs and creation timestamps remained unchanged. The explicitly authorized temporary SSH key was removed. Local store persistence/retrieval tests also pass.

@@ -1,0 +1,23 @@
+{
+  "shoreline": {
+    "name": "Shoreline",
+    "url": "https://gis.shorelinewa.gov/server/rest/services/PublicFacing/PropertyInformation/MapServer/15",
+    "boundary": "https://gis.shorelinewa.gov/server/rest/services/PublicFacing/PropertyInformation/MapServer/0",
+    "code": "CURR_ZONE",
+    "label": "Zoning_description"
+  },
+  "bellevue": {
+    "name": "Bellevue",
+    "url": "https://services1.arcgis.com/EYzEZbDhXZjURPbP/arcgis/rest/services/Zoning/FeatureServer/7",
+    "boundary": "https://services1.arcgis.com/EYzEZbDhXZjURPbP/arcgis/rest/services/City_Boundary/FeatureServer",
+    "code": "Zoning",
+    "label": "ZoningDescription"
+  },
+  "redmond": {
+    "name": "Redmond",
+    "url": "https://gis.redmond.gov/arcgis/rest/services/PV/Planning/MapServer/7",
+    "boundary": "https://gis.redmond.gov/arcgis/rest/services/ESRICommunity/CityOfRedmondData/MapServer/2",
+    "code": "d_Zone",
+    "label": null
+  }
+}
