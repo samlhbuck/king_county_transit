@@ -1,7 +1,13 @@
 Route Lens — Product Vision, Priorities, and Implementation Record
-Updated: 2026-10-08  
+Updated: 2026-11-14  
 Purpose of this file: Working product direction and prioritized implementation backlog for Route Lens. This is a guide for Codex and product decisions, not a demand to implement every idea immediately.
 Route Lens is an invitation, not an argument. It grows out of genuine enthusiasm for cities, transit, neighborhoods, and the pleasure of wandering. Users may just have fun in the app itself, enhancing their understanding of Seatle's geography. They may also discover buses, urban density, unfamiliar places, or urban planning along the way. Neither outcome is compulsory. The app must never feel like an activist tool, a transit-ridership campaign, or a sales pitch. Enthusiasm should emerge organically from a good experience.
+How to maintain this plan with Codex (2026-11-14)
+- This document is Route Lens's canonical product direction and backlog. The repository-root AGENTS.md instructs Codex to read it before planning or implementing Route Lens changes.
+- Product discussions can change priorities, add acceptance criteria, or retire ideas. Record decisions here, update the decision board when relevant, and avoid a separate competing backlog.
+- Priority indicates sequencing, not automatic authorization. Codex should carry out the specific task requested, report tests and limitations, and leave exploratory work as research until there is a user goal and usable data.
+- Track local implementation, test verification, real-device verification, and deployment separately; do not assume that a merged or committed change is live. Existing numbered items and previous findings remain the source of truth unless explicitly updated.
+
 0. Product identity and operating principles
 Route Lens helps people discover, understand, and enjoy the city through its transit network. It asserts the axiom that transit (plus the last mile) is a sufficient tool for understanding a city. Routes are a way to experience places, not merely efficient paths between predefined origins and destinations. A bus that is not the fastest option can still be a wonderful way to spend an afternoon, visit a friend/visit with a friend, or discover a neighborhood. Transit brings people together.
 The creator is also a target user. Real recreational use and genuine curiosity—not just debugging sessions—should direct future development.
