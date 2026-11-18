@@ -35,6 +35,6 @@ A continuous route stored as several encoded fragments may fail even though stit
 - `web/map.js`, `web/app.js`, `web/index.html`, `web/style.css`: existing map lifecycle integration, opt-in initialization and appearance.
 - `tests/route_visibility.cjs`, `tests/test_context_routes.py`: geometry thresholds, edge ownership, branches, duplication, projection, malformed data, pan/zoom.
 - `tests/route_visibility_browser.cjs`: selected route retained, filter bypass, debug visibility, unchanged selector inventory, scrubber compatibility, coalescing and default-off behavior.
-- `docs/priorities.md`: item 42 checkpoint; existing priorities preserved.
+- `docs/priorities.md`: item 48 checkpoint; existing priorities preserved.
 
 Run Node tests directly; run Python tests with `.venv/bin/python -m unittest tests.test_context_routes`. Browser test uses the existing dependency-free Chrome harness and `APP_URL=http://127.0.0.1:PORT node tests/route_visibility_browser.cjs`.
