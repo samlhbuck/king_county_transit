@@ -222,6 +222,7 @@ if (typeof document !== 'undefined') {
     return node;
   }
   const routeMap = new window.RouteMap($('map'), (id,stopArea) => selectStop(id,stopArea), p => selectProject(p));
+  if(new URLSearchParams(location.search).get('contextRoutes')==='1')routeMap.contextRoutes=new window.ContextRoutes(routeMap);
   const mobileRides = new window.MobileRides();
   new window.OriginPicker(routeMap, async (route, origin, boardingId, directionId) => {
     if(busy || !data)return;

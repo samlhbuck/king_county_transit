@@ -233,12 +233,12 @@ if (typeof window !== 'undefined') window.RouteMap = class {
       this.el('text',{x,y,'font-size':12,fill:'#59497e',stroke:'white','stroke-width':3,'paint-order':'stroke'},group).textContent=continuation.label;
     }
     this.profileRouteLayer=this.el('g',{'pointer-events':'none'});
-    this.stopLayer=this.el('g');this.originLayer=this.el('g',{'pointer-events':'none'});this.profileLayer=this.el('g',{'pointer-events':'none'});this.profilePin=null;this.fit();
+    this.stopLayer=this.el('g');this.originLayer=this.el('g',{'pointer-events':'none'});this.profileLayer=this.el('g',{'pointer-events':'none'});this.profilePin=null;this.fit();this.contextRoutes?.attach();
   }
   setView(){
     this.node.setAttribute('viewBox',this.view.join(' '));
     if(!this.data)return;
-    this.drawPoints();
+    this.drawPoints();this.contextRoutes?.schedule();
     // Update during motion; a trailing debounce starves tiles while scrubbing.
     if(!this.tileFrame)this.tileFrame=requestAnimationFrame(()=>{this.tileFrame=null;this.drawTiles();});
   }

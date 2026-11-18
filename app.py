@@ -13,6 +13,7 @@ from src.route_explorer import build_dashboard_data, refresh_sources, route_cata
 from src import oba
 from src.departures import route_departures
 from src.origins import cached_boarding_stops
+from src.context_routes import cached_context_routes
 from src.feedback import FeedbackStore, RateLimiter, database_path, RETENTION_DAYS
 
 ROOT = Path(__file__).resolve().parent
@@ -79,6 +80,7 @@ def main():
             assets = {"/": ("index.html", "text/html"),
                       "/app.js": ("app.js", "text/javascript"),
                       "/cache.js": ("cache.js", "text/javascript"),
+                      "/route_visibility.js": ("route_visibility.js", "text/javascript"),
                       "/map.js": ("map.js", "text/javascript"),
                       "/location.js": ("location.js", "text/javascript"),
                       "/frontage.js": ("frontage.js", "text/javascript"),
@@ -100,6 +102,8 @@ def main():
                     with lock:
                         body = payload(self.route_id())
                     self.send_body(body)
+                elif path == "/api/context-routes":
+                    self.send_body(json.dumps(cached_context_routes(), allow_nan=False).encode())
                 elif path == "/api/boarding-stops":
                     self.send_body(json.dumps(cached_boarding_stops(), allow_nan=False).encode())
                 elif path == "/api/routes":

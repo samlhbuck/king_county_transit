@@ -1,0 +1,17 @@
+const assert=require('node:assert/strict');
+const {routeVisibility:check,visibilityGrid}=require('../web/route_visibility.js');
+const run=paths=>check(paths,300,300,{rectangleFraction:1});
+assert.ok(run([[[0,50],[300,50]]]).passes,'long crossing');
+assert.ok(run([[[0,50],[230,50]]]).passes,'terminates inside third cell');
+assert.ok(run([[[20,50],[150,50],[150,150]]]).passes,'sharp turn');
+assert.equal(run([[[99,99],[101,101],[99,101],[101,99]]]).count,0,'corner grazes');
+assert.equal(run([[[0,50],[90,50]],[[110,50],[190,50]],[[210,50],[290,50]]]).passes,false,'disconnected paths do not pool');
+assert.equal(run([[[0,100],[300,100]]]).count,3,'grid boundary not counted twice');
+assert.equal(run([[[0,50],[300,50]],[[0,50],[300,50]]]).count,3,'duplicate directions independent');
+assert.equal(run([[[0,50],[114,50]]]).count,1,'minimum length');
+assert.equal(run([[[0,50],[115,50]]]).count,2,'threshold inclusive');
+assert.equal(run([[[400,50],[700,50]]]).passes,false,'pan away');
+assert.ok(run([[[0,50],[300,50]]]).passes);
+assert.equal(check([[[0,50],[300,50]]],3000,3000).passes,false,'zoom out');
+assert.throws(()=>visibilityGrid(300,300,{gridSize:0}));
+console.log('Coverage: crossings, internal termini, turns, corner grazes, disconnected parts, boundaries, duplicate directions, pan/zoom and config passed');
