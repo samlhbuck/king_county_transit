@@ -334,3 +334,9 @@ body.route-loading #status::before{content:'';display:block;width:24px;height:24
 #route-visibility-controls label{display:flex;gap:6px;margin:6px 0}
 #route-visibility-controls input[type=number]{max-width:120px}
 @media(prefers-reduced-motion:reduce){.context-routes path{transition:none}}
+
+#context-route-preview{position:fixed;z-index:45;left:12px;top:130px;width:min(320px,calc(100vw - 24px));max-height:40dvh;overflow:auto;padding:10px;background:#fffffff5;border:1px solid #c1d0c2;border-radius:10px;box-shadow:0 3px 14px #0002;font-size:14px}
+#context-route-preview button{min-width:44px;min-height:44px;touch-action:manipulation;margin:3px;padding:6px 10px}
+#context-route-preview>button:first-child{float:right}
+#context-route-preview button[aria-pressed=true]{background:#435c83;color:white}
+.context-routes path:focus{outline:none;stroke:#435c83;stroke-width:4}

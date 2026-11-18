@@ -34,7 +34,7 @@ let socket;
   await send('Runtime.enable');
   await send('Page.enable');
 
-  await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
+  await send('Emulation.setDeviceMetricsOverride',{width:Number(process.env.TEST_WIDTH||390),height:844,deviceScaleFactor:1,mobile:!process.env.TEST_WIDTH});
   await send('Page.navigate',{url:(process.env.APP_URL || 'http://127.0.0.1:8000')+'/?offline=1&contextRoutes=1&routeGrid=1'});
   let ready=false;
   for(let i=0;i<300;i++){ready=await evaluate(`!!document.querySelector('#dashboard:not([hidden]) .stop-marker')`);if(ready)break;await sleep(100);}
@@ -61,6 +61,48 @@ let socket;
   await evaluate(`window.contextUpdates=0;const original=contextTest.update.bind(contextTest);contextTest.update=()=>{contextUpdates++;original();};for(let i=0;i<50;i++)contextTest.schedule()`);
   await sleep(150);
   assert.ok(await evaluate(`contextUpdates<=2`),'movement updates are coalesced');
+
+  // Deterministic overlapping geometry; use real selection/back handlers with a
+  // route payload fixture so this test does not depend on remote route analysis.
+  await evaluate(`(()=>{
+    const c=contextTest,m=c.map;window.originalRoute=m.data.routeId;
+    window.originalView=[...m.view];window.originalFraction=document.getElementById('frontage-position').value;
+    const ids=c.routes.filter(r=>r.id!==originalRoute&&c.actions.describe(r.id)).slice(0,2).map(r=>r.id);
+    window.testRoute=ids[0];
+    const box=m.node.getBoundingClientRect(),matrix=m.node.getScreenCTM().inverse();
+    const center=new DOMPoint(box.left+box.width/2,box.top+box.height/2).matrixTransform(matrix);
+    const a=m.inverse(center.x-50,center.y),b=m.inverse(center.x+50,center.y);
+    c.routes=ids.map(id=>({id,paths:[[a,b]],bounds:[[Math.min(a[0],b[0]),Math.min(a[1],b[1]),Math.max(a[0],b[0]),Math.max(a[1],b[1])]]}));
+    c.filtered=false;c.attach();c.update();
+    const payload=JSON.parse(JSON.stringify(m.data));payload.routeId=testRoute;
+    const fetchOriginal=window.fetch;window.fetch=(url,options)=>String(url).includes('/api/data?route='+encodeURIComponent(testRoute))?Promise.resolve(new Response(JSON.stringify(payload),{status:200})):fetchOriginal(url,options);
+    window.tapPoint=[box.left+box.width/2,box.top+box.height/2];
+  })()`);
+  await evaluate(`contextTest.map.didPan=false;contextTest.map.node.dispatchEvent(new PointerEvent('click',{bubbles:true,clientX:tapPoint[0],clientY:tapPoint[1],pointerType:${JSON.stringify(process.env.TEST_WIDTH?"mouse":"touch")}}))`);
+  assert.equal(await evaluate(`document.querySelectorAll('#context-route-preview [data-route-id]').length`),2,'overlap chooser lists both routes');
+  assert.equal(await evaluate(`document.querySelector('#context-route-preview>button:last-child').textContent`),'Explore route','no unverified transfer claim');
+  await evaluate(`[...document.querySelectorAll('#context-route-preview [data-route-id]')].find(b=>b.dataset.routeId===testRoute).click();document.querySelector('#context-route-preview>button:last-child').click()`);
+  for(let i=0;i<200;i++){if(await evaluate(`contextTest.map.data.routeId===testRoute&&!document.body.classList.contains('route-loading')`))break;await sleep(100);}
+  assert.ok(await evaluate(`contextTest.map.data.routeId===testRoute`),'Explore activates route');
+  assert.ok(await evaluate(`Number(document.getElementById('frontage-position').value)>0`),'handoff starts along route');
+  assert.ok(await evaluate(`Math.abs(contextTest.map.view[2]-originalView[2])<.01`),'zoom preserved');
+  assert.ok(await evaluate(`!document.getElementById('context-route-back').hidden`),'previous route action visible');
+  await evaluate(`document.getElementById('context-route-back').click()`);
+  for(let i=0;i<200;i++){if(await evaluate(`contextTest.map.data.routeId===originalRoute&&!document.body.classList.contains('route-loading')`))break;await sleep(100);}
+  assert.ok(await evaluate(`contextTest.map.data.routeId===originalRoute`),'previous route restored');
+  assert.deepEqual(await evaluate(`contextTest.map.view`),await evaluate(`originalView`),'previous viewport restored');
+  assert.equal(await evaluate(`document.getElementById('frontage-position').value`),await evaluate(`originalFraction`),'previous scrub position restored');
+
+  await evaluate(`contextTest.update();const node=[...contextTest.nodes.values()].find(n=>n.getAttribute('tabindex')==='0');node.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}))`);
+  assert.ok(await evaluate(`!!document.getElementById('context-route-preview')`),'keyboard opens preview');
+  await evaluate(`document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape'}))`);
+  assert.equal(await evaluate(`!!document.getElementById('context-route-preview')`),false,'Escape closes preview');
+  await evaluate(`window.stopClicks=0;document.addEventListener('route-stop-selected',()=>stopClicks++);contextTest.map.didPan=false;document.querySelector('.stop-marker').dispatchEvent(new MouseEvent('click',{bubbles:true,clientX:tapPoint[0],clientY:tapPoint[1]}))`);
+  assert.ok(await evaluate(`stopClicks>0`),'stop selection still works above contextual routes');
+  assert.equal(await evaluate(`!!document.getElementById('context-route-preview')`),false,'stop click is not intercepted');
+  await evaluate(`contextTest.map.didPan=false;document.querySelector('.project-marker').dispatchEvent(new MouseEvent('click',{bubbles:true,clientX:tapPoint[0],clientY:tapPoint[1]}))`);
+  assert.equal(await evaluate(`!!document.getElementById('context-route-preview')`),false,'permit click is not intercepted');
+  console.log('Overlap chooser, touch click, route activation, anchored scrubber, preserved zoom and previous route passed');
   await send('Page.navigate',{url:(process.env.APP_URL || 'http://127.0.0.1:8000')+'/?offline=1'});
   for(let i=0;i<300;i++){if(await evaluate(`!!document.querySelector('#dashboard:not([hidden]) .stop-marker')`))break;await sleep(100);}
   assert.equal(await evaluate(`document.querySelector('.context-routes')`),null,'default app has no contextual layer');

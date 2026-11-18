@@ -85,7 +85,7 @@ if(typeof window!=='undefined')window.FrontageLens=class{
     if(handoff?.origin&&!handoff.directionId&&!handoff.boardingId){
       const candidates=this.profiles.map(profile=>({profile,nearest:nearestProfilePosition(profile,handoff.origin)})).filter(p=>p.nearest);
       candidates.sort((a,b)=>a.nearest.gap-b.nearest.gap);
-      if(candidates[0]?.nearest.gap<=2000)this.path.value=candidates[0].profile.id;
+      if(candidates[0]&&(handoff.contextual||candidates[0].nearest.gap<=2000))this.path.value=candidates[0].profile.id;
     }
     document.getElementById('frontage-content').hidden=!this.profiles.length;
     document.getElementById('frontage-method').textContent=data.zoning?.frontage?.method || 'Adjacent zoning is unavailable for this route. An imported zoning source is required.';
@@ -150,9 +150,9 @@ if(typeof window!=='undefined')window.FrontageLens=class{
     const first=profile.stops[0],last=profile.stops.at(-1);
     document.getElementById('frontage-endpoints').textContent=first&&last?`${first.name} → ${last.name}`:'Start → End';
     const nearest=handoff?.origin?nearestProfilePosition(profile,handoff.origin):null;
-    const fraction=handoff?.fraction??(nearest&&nearest.gap<=2000?nearest.fraction:0);
+    const fraction=handoff?.fraction??(nearest&&(handoff?.contextual||nearest.gap<=2000)?nearest.fraction:0);
     this.preview(fraction,false);
-    this.handoffPoint=nearest&&nearest.gap<=2000?profilePosition(profile,fraction):null;
+    this.handoffPoint=nearest&&(handoff?.contextual||nearest.gap<=2000)?profilePosition(profile,fraction):null;
   }
   highlightStop(stop){
     this.selectedBoardingIds=stop?.oba_stop_ids || [];

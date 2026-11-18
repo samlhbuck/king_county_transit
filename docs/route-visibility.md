@@ -14,7 +14,13 @@ Implemented locally on 2026-11-17; not deployed or verified on iPhone.
 
 The analysis rectangle is centered in the SVG's actual visible screen bounds, 70% of both dimensions. Each continuous encoded OBA polyline is projected with the existing RouteMap projection and screen transform, then clipped segment-by-segment to nine cells. Length within each cell is summed in CSS pixels; 15% of cell width qualifies the cell. Three cells qualify a path, and any qualifying path qualifies its route. Separate branches/directions cannot combine their counts. Segments exactly on a shared grid edge belong to one side, avoiding doubled occupancy. Thresholds are identical for every transit mode.
 
-The debug overlay shows qualifying cells for the selected route's best single path, its count, and pass/fail. Failing that test never hides the selected route. Context lines are noninteractive and render beneath the existing selected-route/stop/project overlays. Existing route selection, direction handling and route progress remain responsible for the selected route.
+The debug overlay shows qualifying cells for the selected route's best single path, its count, and pass/fail. Failing that test never hides the selected route. Context lines render beneath the existing selected-route/stop/project overlays. Tap or click a contextual line to highlight it and open a compact preview; overlapping routes appear as separate choices. Choose **Explore route** to use the existing route loader, anchor the profile near the clicked point and retain geographic zoom. **← Previous route** restores the prior route, profile position and viewport. Keyboard users can focus a visible contextual line and press Enter; the anchor is its closest point to the viewport center. Escape dismisses the preview. Existing route selection, direction handling and route progress remain responsible for the selected route.
+
+## Interaction and hierarchy
+
+The active route retains its saturated styling and existing tools. Previewed contextual routes use a stronger stroke; remaining contextual routes are fainter. This is an interaction state, not another qualification or prominence score. No geometric crossing is labeled a transfer. Catalog descriptions are shown when available; the preview does not infer a travel direction from a shape.
+
+Hit testing considers every qualifying route within 12 CSS pixels (18 for touch) and offers all matches, including coincident and closely parallel lines. Stops and permits take precedence at their markers; tap a nearby exposed portion of the line to inspect contextual routes there. Separate shapes never receive artificial joining segments. Where cached geometry and the available scrubber profile differ, the nearest point on an available profile is used; an exact branch match cannot be guaranteed.
 
 ## Data and performance
 
@@ -34,7 +40,7 @@ A continuous route stored as several encoded fragments may fail even though stit
 - `web/route_visibility.js`: pure clipping algorithm, config/debug UI, contextual layer integration.
 - `web/map.js`, `web/app.js`, `web/index.html`, `web/style.css`: existing map lifecycle integration, opt-in initialization and appearance.
 - `tests/route_visibility.cjs`, `tests/test_context_routes.py`: geometry thresholds, edge ownership, branches, duplication, projection, malformed data, pan/zoom.
-- `tests/route_visibility_browser.cjs`: selected route retained, filter bypass, debug visibility, unchanged selector inventory, scrubber compatibility, coalescing and default-off behavior.
+- `tests/route_visibility_browser.cjs`: selected route retained, filter bypass, debug visibility, unchanged selector inventory, scrubber compatibility, coalescing and default-off behavior; overlap choice, touch-style clicks, route activation, anchored scrubber and restored previous viewport using a deterministic route payload fixture.
 - `docs/priorities.md`: item 48 checkpoint; existing priorities preserved.
 
 Run Node tests directly; run Python tests with `.venv/bin/python -m unittest tests.test_context_routes`. Browser test uses the existing dependency-free Chrome harness and `APP_URL=http://127.0.0.1:PORT node tests/route_visibility_browser.cjs`.

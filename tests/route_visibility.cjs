@@ -15,3 +15,14 @@ assert.ok(run([[[0,50],[300,50]]]).passes);
 assert.equal(check([[[0,50],[300,50]]],3000,3000).passes,false,'zoom out');
 assert.throws(()=>visibilityGrid(300,300,{gridSize:0}));
 console.log('Coverage: crossings, internal termini, turns, corner grazes, disconnected parts, boundaries, duplicate directions, pan/zoom and config passed');
+
+const {contextualHits}=require('../web/route_visibility.js');
+const routes=[{id:'a',paths:[[[0,0],[100,0]]]},{id:'b',paths:[[[0,5],[100,5]]]},{id:'disconnected',paths:[[[0,50],[10,50]],[[90,50],[100,50]]]}];
+const hits=contextualHits(routes,[50,2],p=>p);
+assert.deepEqual(hits.map(h=>h.route.id),['a','b'],'overlapping routes both selectable');
+assert.deepEqual(hits[0].origin,{x:50,y:0},'anchor interpolates along line');
+assert.equal(contextualHits(routes,[50,50],p=>p).length,0,'no imaginary joining segments');
+assert.equal(contextualHits([routes[0]],[50,16],p=>p).length,0,'desktop tolerance');
+assert.equal(contextualHits([routes[0]],[50,16],p=>p,18).length,1,'touch tolerance');
+assert.deepEqual(contextualHits([routes[0]],[100,0],p=>[p[0]*2,p[1]*2])[0].origin,{x:50,y:0},'screen-space projection retains world anchor');
+console.log('Contextual hit testing passed');

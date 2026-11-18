@@ -222,7 +222,10 @@ if (typeof document !== 'undefined') {
     return node;
   }
   const routeMap = new window.RouteMap($('map'), (id,stopArea) => selectStop(id,stopArea), p => selectProject(p));
-  if(new URLSearchParams(location.search).get('contextRoutes')==='1')routeMap.contextRoutes=new window.ContextRoutes(routeMap);
+  if(new URLSearchParams(location.search).get('contextRoutes')==='1')routeMap.contextRoutes=new window.ContextRoutes(routeMap,{
+    describe:id=>catalog.find(r=>r.route_id===id),
+    explore:async(id,origin)=>{if(busy||!catalog.some(r=>r.route_id===id))return false;const previous=snapshot();$('route').value=id;await load(false,{origin,previous,contextual:true});return data?.routeId===id;}
+  });
   const mobileRides = new window.MobileRides();
   new window.OriginPicker(routeMap, async (route, origin, boardingId, directionId) => {
     if(busy || !data)return;
@@ -651,7 +654,7 @@ if (typeof document !== 'undefined') {
       if (transition?.restore) { routeMap.view=[...transition.restore.view]; routeMap.setView(); }
       else if(handoff&&frontageLens.handoffPoint){
         const point=frontageLens.handoffPoint,[x,y]=routeMap.xy([point.x,point.y]);
-        const width=Math.min(oldView[2]/oldScale,1400)*routeMap.scale,height=width*oldView[3]/oldView[2];
+        const width=(transition?.contextual?oldView[2]/oldScale:Math.min(oldView[2]/oldScale,1400))*routeMap.scale,height=width*oldView[3]/oldView[2];
         routeMap.view=[x-width/2,y-height/2,width,height];routeMap.setView();
       }
       else if (transition?.origin && selected) routeMap.focusStop(selected);
@@ -669,6 +672,10 @@ if (typeof document !== 'undefined') {
   for (const button of document.querySelectorAll('[data-chart-metric]')) button.addEventListener('click', () => { $('metric').value = button.dataset.chartMetric; render(); });
   for (const id of ['open-filters','edit-filters']) $(id).addEventListener('click',()=>$('filter-dialog').showModal());
   $('sidebar-metric').addEventListener('change',()=>{$('metric').value=$('sidebar-metric').value;render();});
+  if(routeMap.contextRoutes){
+    const back=document.createElement('button');back.id='context-route-back';back.textContent='← Previous route';back.hidden=true;back.onclick=()=>$('back-route').click();document.querySelector('.map-framing').append(back);
+    document.addEventListener('route-loaded',()=>{back.hidden=!navigation.length;back.title=navigation.at(-1)?.label||'';});
+  }
   $('back-route').addEventListener('click',()=>{if(busy || !navigation.length)return;const restore=navigation.at(-1);$('route').value=restore.route;load(false,{restore});});
   $('close-filters').addEventListener('click',()=>$('filter-dialog').close());
   $('stop').addEventListener('change', e => selectStop(e.target.value));

@@ -37,10 +37,39 @@ function routeVisibility(paths,width,height,config={}){
   });
   return {...best,passes:best.count>=grid.minimumCells,grid};
 }
-if(typeof module!=='undefined')module.exports={routeVisibility,visibilityGrid,clippedLength};
+function contextualHits(routes,point,project,tolerance=12){
+  return routes.map(route=>{
+    let best=null;
+    for(const path of route.paths)for(let i=1;i<path.length;i++){
+      const a=project(path[i-1]),b=project(path[i]),dx=b[0]-a[0],dy=b[1]-a[1];
+      const t=Math.max(0,Math.min(1,((point[0]-a[0])*dx+(point[1]-a[1])*dy)/(dx*dx+dy*dy||1)));
+      const gap=Math.hypot(point[0]-a[0]-t*dx,point[1]-a[1]-t*dy);
+      if(gap<=tolerance&&(!best||gap<best.gap))best={route,gap,origin:{x:path[i-1][0]+t*(path[i][0]-path[i-1][0]),y:path[i-1][1]+t*(path[i][1]-path[i-1][1])}};
+    }
+    return best;
+  }).filter(Boolean).sort((a,b)=>a.gap-b.gap||a.route.id.localeCompare(b.route.id));
+}
+if(typeof module!=='undefined')module.exports={routeVisibility,visibilityGrid,clippedLength,contextualHits};
 if(typeof window!=='undefined')window.ContextRoutes=class{
-  constructor(map){
+  constructor(map,actions={}){
+    this.actions=actions;this.visibleIds=new Set();
     this.map=map;this.config={...routeVisibilityDefaults};this.filtered=true;this.debug=new URLSearchParams(location.search).get('routeGrid')==='1';this.routes=[];
+    map.node.addEventListener('pointerdown',event=>{this.pointerType=event.pointerType;});
+    map.node.addEventListener('click',event=>{
+      if(map.didPan||map.pickingOrigin||event.target.closest('[role=button]'))return;
+      const matrix=map.node.getScreenCTM();if(!matrix)return;
+      const project=p=>{const [x,y]=map.xy(p);return [matrix.a*x+matrix.c*y+matrix.e,matrix.b*x+matrix.d*y+matrix.f];};
+      const hits=contextualHits(this.routes.filter(r=>this.visibleIds.has(r.id)),[event.clientX,event.clientY],project,(event.pointerType||this.pointerType)==='touch'?18:12);
+      this.dismiss();if(!hits.length)return;
+      event.preventDefault();event.stopImmediatePropagation();this.preview(hits);
+    },true);
+    map.node.addEventListener('dblclick',event=>{if(this.card){event.preventDefault();event.stopImmediatePropagation();}},true);
+    map.node.addEventListener('pointermove',()=>{if(map.didPan)this.dismiss();});
+    document.addEventListener('route-loaded',()=>this.dismiss());
+    document.addEventListener('route-stop-selected',()=>this.dismiss());
+    document.addEventListener('project-card-open',()=>this.dismiss());
+    document.getElementById('frontage-position').addEventListener('input',()=>this.dismiss());
+    document.addEventListener('keydown',e=>{if(e.key==='Escape'&&this.card){this.dismiss();map.node.focus({preventScroll:true});}});
     const controls=document.createElement('details');controls.id='route-visibility-controls';
     const title=document.createElement('summary');title.textContent='Experimental route visibility';controls.append(title);
     const toggle=(text,value,change)=>{const label=document.createElement('label'),input=document.createElement('input');input.type='checkbox';input.checked=value;input.onchange=()=>{change(input.checked);this.schedule();};label.append(input,document.createTextNode(text));controls.append(label);return input;};
@@ -55,14 +84,33 @@ if(typeof window!=='undefined')window.ContextRoutes=class{
       const bounds=[Infinity,Infinity,-Infinity,-Infinity];for(const [x,y]of path){bounds[0]=Math.min(bounds[0],x);bounds[1]=Math.min(bounds[1],y);bounds[2]=Math.max(bounds[2],x);bounds[3]=Math.max(bounds[3],y);}return bounds;
     })}));this.attach();}).catch(()=>this.status.textContent='Contextual route geometry unavailable; selected route is unaffected.');
   }
+  dismiss(){this.card?.remove();this.card=null;this.previewId=null;this.paint();}
+  paint(){for(const [id,node] of this.nodes||[]){node.setAttribute('stroke',id===this.previewId?'#435c83':'#5c7189');node.setAttribute('stroke-width',id===this.previewId?4:2);node.style.opacity=this.visibleIds.has(id)?(id===this.previewId?'.85':'.55'):'0';}}
+  preview(hits){
+    const card=document.createElement('section');card.id='context-route-preview';card.setAttribute('aria-label','Nearby route preview');
+    const close=document.createElement('button');close.textContent='×';close.setAttribute('aria-label','Close route preview');close.onclick=()=>this.dismiss();card.append(close);
+    const heading=document.createElement('strong');heading.textContent=hits.length>1?'Choose a route':'Route';card.append(heading);
+    const choices=document.createElement('div'),detail=document.createElement('p'),explore=document.createElement('button');explore.textContent='Explore route';card.append(choices,detail,explore);
+    const choose=hit=>{
+      this.previewId=hit.route.id;this.paint();
+      const info=this.actions.describe?.(hit.route.id)||{};
+      detail.textContent=[info.name||hit.route.id,info.description||info.long_name||'Direction unavailable'].filter(Boolean).join(' · ');
+      for(const button of choices.children)button.setAttribute('aria-pressed',String(button.dataset.routeId===hit.route.id));
+      explore.onclick=async()=>{explore.disabled=true;try{const ok=await this.actions.explore?.(hit.route.id,hit.origin);if(ok)this.dismiss();else detail.textContent='Unable to open route. Please retry.';}finally{explore.disabled=false;}};
+    };
+    for(const hit of hits){const button=document.createElement('button');button.dataset.routeId=hit.route.id;button.textContent=this.actions.describe?.(hit.route.id)?.name||hit.route.id;button.onclick=()=>choose(hit);choices.append(button);}
+    document.body.append(card);this.card=card;choose(hits[0]);choices.firstElementChild.focus({preventScroll:true});
+  }
   attach(){
     const m=this.map;if(!m.data)return;
-    this.layer?.remove();this.debugLayer?.remove();this.nodes=new Map();
+    this.dismiss();this.layer?.remove();this.debugLayer?.remove();this.nodes=new Map();
     this.layer=m.el('g',{class:'context-routes','pointer-events':'none'});m.node.insertBefore(this.layer,m.catchmentLayer);
     this.debugLayer=m.el('g',{'pointer-events':'none',class:'route-debug-grid'});
     for(const route of this.routes){
       const node=m.el('path',{d:route.paths.map(p=>m.path({type:'LineString',coordinates:p})).join(' '),fill:'none',stroke:'#5c7189','stroke-width':2,'vector-effect':'non-scaling-stroke'},this.layer);
-      node.style.opacity=0;this.nodes.set(route.id,node);
+      node.style.opacity=0;node.setAttribute('role','button');node.setAttribute('aria-label',`Preview route ${this.actions.describe?.(route.id)?.name||route.id}`);node.setAttribute('tabindex','-1');
+      node.addEventListener('keydown',event=>{if(['Enter',' '].includes(event.key)){event.preventDefault();this.dismiss();const rect=m.node.getBoundingClientRect(),ctm=m.node.getScreenCTM();if(!ctm)return;const project=p=>{const [x,y]=m.xy(p);return [ctm.a*x+ctm.c*y+ctm.e,ctm.b*x+ctm.d*y+ctm.f];};const hits=contextualHits([route],[rect.left+rect.width/2,rect.top+rect.height/2],project,Infinity);if(hits.length)this.preview(hits);}});
+      this.nodes.set(route.id,node);
     }
     this.schedule();
   }
@@ -72,13 +120,15 @@ if(typeof window!=='undefined')window.ContextRoutes=class{
     const rect=m.node.getBoundingClientRect(),ctm=m.node.getScreenCTM();if(!ctm||!rect.width||!rect.height)return;
     const screen=p=>{const [x,y]=m.xy(p);return [ctm.a*x+ctm.c*y+ctm.e-rect.left,ctm.b*x+ctm.d*y+ctm.f-rect.top];};
     const [vx,vy,vw,vh]=m.visibleBounds(),a=m.inverse(vx,vy),b=m.inverse(vx+vw,vy+vh);
-    let shown=0;
+    let shown=0;this.visibleIds.clear();
     for(const route of this.routes){
       // Cull before expensive cell clipping; no route eligibility is inferred from bounds.
       const visible=route.paths.filter((_,i)=>{const box=route.bounds[i];return box[0]<=b[0]&&box[2]>=a[0]&&box[1]<=a[1]&&box[3]>=b[1];}).map(p=>p.map(screen));
       const qualifies=visible.length&&(!this.filtered||routeVisibility(visible,rect.width,rect.height,this.config).passes);
-      const show=route.id!==m.data.routeId&&qualifies;this.nodes.get(route.id).style.opacity=show?'.65':'0';if(show)shown++;
+      const show=route.id!==m.data.routeId&&qualifies;this.nodes.get(route.id).style.opacity=show?'.65':'0';this.nodes.get(route.id).setAttribute('tabindex',show?'0':'-1');if(show){shown++;this.visibleIds.add(route.id);}
     }
+    if(this.previewId&&!this.visibleIds.has(this.previewId))this.dismiss();
+    this.paint();
     this.debugLayer.replaceChildren();this.debugLayer.style.display=this.debug?'':'none';
     const selected=m.data.route.flatMap(g=>g.type==='LineString'?[g.coordinates]:g.type==='MultiLineString'?g.coordinates:[]);
     const result=routeVisibility(selected.map(p=>p.map(screen)),rect.width,rect.height,this.config),g=result.grid;
