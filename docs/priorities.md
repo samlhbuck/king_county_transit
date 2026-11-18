@@ -1,5 +1,5 @@
 Route Lens — Product Vision, Priorities, and Implementation Record
-Updated: 2026-11-14  
+Updated: 2026-11-17  
 Purpose of this file: Working product direction and prioritized implementation backlog for Route Lens. This is a guide for Codex and product decisions, not a demand to implement every idea immediately.
 Route Lens is an invitation, not an argument. It grows out of genuine enthusiasm for cities, transit, neighborhoods, and the pleasure of wandering. Users may just have fun in the app itself, enhancing their understanding of Seatle's geography. They may also discover buses, urban density, unfamiliar places, or urban planning along the way. Neither outcome is compulsory. The app must never feel like an activist tool, a transit-ridership campaign, or a sales pitch. Enthusiasm should emerge organically from a good experience.
 How to maintain this plan with Codex (2026-11-14)
@@ -44,6 +44,8 @@ Statuses mean: Implemented = locally built; Verify = requires real-device/live-f
 | P1 | 45 — Map route-point → scrubber synchronization | Open · Extend 24 | Allow clicking/tapping any point on the active route's selected directional path to set scrubber progress and lens position, not only stop markers. Consider desktop hover as preview; don't hijack map pan, permit clicks, or alternate branches. |
 | P1 | 46 — Route frequency by time/day | Open · Design/data validation | Summarize directional scheduled headways and practical expected waiting at peak, midday/off-peak, evening/early morning, weekends and special/holiday schedules when available. Make 'show up without checking' vs 'check times' evident, with coverage and uncertainty. |
 | P1 | 30 — Compact lens navigator | Explore | Design a small lens wheel/turret near route title that temporarily overlays map, then retracts. |
+| P1 | 49 — Keep route description/destinations available after activation | Open · Small UX fix | Preserve the contextual-route preview's route description and major destinations in an accessible, compact active-route summary; no loss of map or scrubber state. |
+| P1 | 50 — Fit entire long routes and permit wider zoom-out | Open · Diagnose/fix | Make Frame route and manual map zoom capable of showing all of Link 1 Line or 2 Line with appropriate padding; inspect zoom and map-bound constraints. |
 | P2 | 24 — Map stop → scrubber synchronization | Implemented locally · Verify | Map stop selection now updates scrubber, filled route and terrain without recentering. Verify real-device behavior and retain repeated traversal occurrences. |
 | P2 | 26 — Mobile scrubber touch tolerance | Implemented locally · Verify | Verify the lower 44-pixel scrub target and off-track dragging on iPhone; the visible track and panel height are preserved. |
 | P2 | 31 — Ride-view catchment framing | Open | Prevent both sides of the route's catchment from being unintentionally cut off by auto-follow. |
@@ -54,6 +56,9 @@ Statuses mean: Implemented = locally built; Verify = requires real-device/live-f
 | P2 | 34 — Trip/stop reports and experiential lens | Explore | Collect varied experiences; use positive experiences for public discovery. No public unpleasantness index. Separate from Item 28's immediate product-feedback mechanism. |
 | P2 | 35 — Civic contestation and legal events | Research | Map documented advocacy, political interventions, threatened legal action, appeals, and litigation with sources and dates. |
 | P2 | 36 — Comfort and transit flexibility | Explore | Infrastructure/exposure and service metrics for pleasant outings, scenic runs, and easy escape by transit. |
+| P2 | 51 — Quiet, scale-aware geographic basemap | Open · Prototype | Reduce OSM visual competition; progressively reveal geographic detail with zoom while preserving usable context, attribution and a comparison/fallback style. |
+| Experiment | 52 — Context-route prominence and stop gateways | Explore · After 48 validation | Preserve the 3×3 baseline. Test graduated route prominence; viewport-local stop spacing, rare single-stop access points, and independent route-line versus stop-node emphasis. |
+| Explore | 53 — Multiscale destinations and mode perspective | Research/design | Investigate semantic zoom and agglomerations/names as complementary place evidence; do not force a destination ontology or change active transport selection merely by zooming. |
 Implementation discipline: First-use guidance (28A) and elevation (28B) have been implemented locally, with real-device verification still relevant. Product feedback (28C) is implemented; review incoming reports alongside real-device verification. Item 41 is a high-priority, contained improvement to the central exploration flow; coordinate it with existing ? behavior and do not reopen completed work unnecessarily. Do not make secondary geometry or gesture polish a prerequisite unless it blocks the main experience. Keep exploratory features as research until useful data and an actual user task are clear.
 2. Immediate bugs and interaction work
 17 — Stabilize the complete mobile viewport [P1 · VERIFY]
@@ -272,3 +277,49 @@ Requested 2026-11-17. Default-off geographic experiment, with no mode hierarchy 
 Implementation checkpoint (2026-11-17): read-only cached OBA geometry endpoint, existing SVG/projection integration, coalesced 100 ms updates, offscreen path bounds culling, short opacity transitions, filter bypass, and selected-route debug grid/count/pass status. Missing caches and unjoined feed fragments can cause omissions. Geometry/unit and mobile-emulation browser regression tests pass; actual iPhone performance and visual threshold tuning remain unverified. No push or deployment. See docs/route-visibility.md for enablement and limitations. This opt-in experiment does not reorder established product priorities.
 
 Interactive contextual routes checkpoint (2026-11-17, item 48): contextual lines now support click/tap and keyboard previews, overlapping-route choices, catalog descriptions, and Explore route through the existing loader. Exploration anchors the scrubber to the nearest available profile point and preserves geographic zoom; a map-level Previous route action restores the prior route, viewport and profile position. Active, previewed contextual and secondary contextual strokes remain distinct without changing the 3×3 rule or adding a prominence score. Stops and permits retain precedence. No geometric crossing is labeled Transfer. Pure hit-testing/profile tests, cached-geometry Python tests and desktop/mobile-sized Chrome regression checks pass, including overlap activation, back restoration, keyboard dismissal and marker precedence. Route handoff regression uses a deterministic payload fixture; live data edge cases and actual iPhone touch behavior remain to verify. Default-off under contextRoutes=1; not pushed or deployed.
+2026-11-17 — Route discovery field observations and proposed follow-ons
+User observation from the hosted opt-in `/?contextRoutes=1` experience (2026-11-17): The new context-route layer and direct route selection make recreational exploration substantially easier and more engaging. Previously, finding another route required first selecting an arbitrary map point and searching nearby connections. The map now makes possibilities visible before requiring a search. Protect this discovery loop as the principal acceptance criterion for further tuning. This is a user-reported hosted experience, not independent proof that every local change described in Item 48 is deployed or verified on an actual iPhone.
+
+49 — Preserve route descriptions and major destinations after route activation [P1 · OPEN · SMALL UX FIX]
+Observed (2026-11-17): The preview of a contextual route usefully describes the route and major destinations, but that information disappears after choosing Explore route.
+- Expose the same underlying description and major-destination summary through a compact, reopenable active-route affordance (existing route info / contextual ? if suitable). Do not make the user navigate away or reselect the route to recover the information.
+- Keep the summary collapsed or unobtrusive by default to protect the map; reopening or closing it must preserve route direction, scrubber location, zoom and current lens.
+- Avoid duplicating and drifting route metadata in independent preview/active implementations. If the catalog lacks a description, disclose the absence rather than inventing one.
+- Verify on desktop and mobile, including contextual-route handoff and direct route selection.
+Acceptance: Information that helped someone choose a route remains easily accessible throughout exploration of that active route.
+
+50 — Extend full-route framing and manual zoom-out [P1 · OPEN · DIAGNOSE/FIX]
+Observed (2026-11-17): The map reaches its current zoom-out limit before the complete Link 1 Line or Link 2 Line can fit on screen.
+- Inspect minimum map zoom, geographic/camera bounds, any view-fitting clamp, and padding or overlays in the existing Frame route action.
+- Frame route should include the full relevant selected geometry within the usable visible map area (with padding), and users should be able to manually zoom out far enough to reach a comparable view.
+- Preserve the ability to return to neighborhood-scale exploration; do not force a regional reset on route selection, or alter active route geometries to make them fit.
+- Test both Link lines, short routes, desktop and mobile aspect ratios; flag route geometry deficiencies separately.
+Acceptance: A user can see a whole long rail line at once and return smoothly to close exploration.
+
+51 — Quiet, zoom-sensitive basemap and geography [P2 · OPEN · PROTOTYPE]
+Observed (2026-11-17): The OSM map feels visually loud beside the transit lines. Geographic context should be legible at each scale without crowding the transit discovery affordance.
+- First try a subdued geographic style / optional alternate basemap, with easy comparison against the existing style and appropriate provider licensing/attribution.
+- Longer term, evaluate per-zoom vector-style layers or equivalent: regional coastlines, water, relief and major centers at broad scale; neighborhoods, major corridors and parks at intermediate scale; local streets, blocks and building footprints when zoomed close.
+- More detail at high zoom does not necessarily mean more color or contrast. Keep the active route and actionable contextual routes visibly dominant.
+- Preserve accessibility, performance, offline/fallback behavior, and existing lens overlay stacking. Avoid imposing unsupported neighborhood boundaries.
+Acceptance: At regional, neighborhood and block scales, the background helps people orient themselves without competing with the routes.
+
+52 — Evolve 3×3 contextual route visibility into nuanced geographic significance [EXPERIMENT · EXPLORE]
+Keep Item 48's present grid filter, interactive route selection and reversible exploration as a documented baseline. Do not prematurely replace its intuitive behavior with a complicated relevance model.
+- Compare qualifying-cell count, screen-space traversal, viewport density, edge alignment, stable visibility/hysteresis and perhaps a second larger analysis rectangle as *experiments*, not committed new rules.
+- Distinguish **active** route, **prominent contextual** route and **secondary contextual** route. The current stronger *previewed* stroke is a selection state, not yet a separate geographic prominence score. All visible contextual routes should remain identifiable and explorable.
+- Assess a route's **local stop spacing**, using actually served, consecutively ordered stops within or near the current viewport. Prefer along-route distances and robust summaries over straight-line gaps or route-wide average. A long route with frequent stops can provide local access; a short route may be express-like. Do not infer significance from termini or total route length alone.
+- A route with **only one served stop** in the viewport may warrant special attention as a gateway to distant places. Emphasize the access point when justified by actual service and reach; do not automatically reward an incidental single stop near a viewport edge.
+- Separate **route-line visibility** (continuity/coverage within the geography) from **stop/transfer-node prominence** (access to a larger network). A route may be visually subtle while its one useful stop stands out.
+- Treat **reach**, **resolution** (stop granularity) and **availability** (frequency/service span) as distinct dimensions. Don't conflate proximity or geometry with a confirmed usable transfer or scheduled service.
+- Prefer smooth graded emphasis over suppressing long-distance routes at neighborhood scale; a regional service can be locally important, particularly where it has a rare stop. A larger rectangle is a research option, not the next required implementation.
+- Experiment with real Seattle routes across multiple zooms; evaluate whether users can still discover the next interesting route with minimal effort.
+Acceptance for future prototypes: The viewport makes both local access and gateways to wider geography discoverable without clutter or unexplained disappearing lines.
+
+53 — Scale-relative destinations and transport perspectives [EXPLORE · DESIGN RESEARCH]
+Product hypothesis (2026-11-17): A destination is relative to geographic scale and mode of travel. A district at regional scale reveals neighborhoods when examined closer; a neighborhood reveals streets and blocks. Morphological concentrations and place names/signage are complementary evidence rather than an algorithmically dictated official neighborhood boundary.
+- Investigate **semantic zoom**: what streets, routes, districts, centers and place names become meaningful at a particular scale. A small walking/bike/bus/rail indicator may signal a perspective, but zoom must not silently switch the active selected route or imply mode-exclusive relevance.
+- Let urban concentrations/changes in built form invite curiosity; names from stops, station signs, headsigns and route descriptions can help users recognize places. These sources do not establish unambiguous geographic boundaries.
+- Build from small testable experiences: following a route, noticing a place or a connecting route, and zooming inward to understand its urban form or outward to see its reach. Geographic, zoning and historical lenses should reward questions without claiming unsupported causation.
+- Do not create a mandatory tutorial, fixed sequence, subjective ranking of neighborhoods, or POI list as a prerequisite.
+Success criterion: At different scales, people notice the next plausible place or journey to explore and can obtain deeper information on demand.
