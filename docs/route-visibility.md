@@ -44,3 +44,9 @@ A continuous route stored as several encoded fragments may fail even though stit
 - `docs/priorities.md`: item 48 checkpoint; existing priorities preserved.
 
 Run Node tests directly; run Python tests with `.venv/bin/python -m unittest tests.test_context_routes`. Browser test uses the existing dependency-free Chrome harness and `APP_URL=http://127.0.0.1:PORT node tests/route_visibility_browser.cjs`.
+
+## Optional coverage-emphasis comparison (item 52)
+
+With contextRoutes=1 enabled, turn on **Compare coverage emphasis** in the experimental controls, or add contextEmphasis=1 to the URL. Turn it off to restore the original uniform contextual strokes. This does not change which routes qualify, their hit targets, the active route or preview selection.
+
+The existing best continuous path supplies partial-cell traversal lengths. Each cell contribution is capped at its qualification threshold, and their mean adjusts contextual opacity from 0.4 to 0.7 and stroke width from 1.6 to 2.8 CSS pixels. Previewed routes retain their stronger selection stroke. No stop-spacing, frequency, transfer or gateway conclusions are inferred. Those parts of item 52 remain research; this is a reversible geometric styling comparison, not a recommendation model. Desktop/mobile-emulation tests cover unchanged eligibility at three scales and full selection/back behavior. Actual phone visual evaluation remains.

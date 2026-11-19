@@ -26,3 +26,13 @@ assert.equal(contextualHits([routes[0]],[50,16],p=>p).length,0,'desktop toleranc
 assert.equal(contextualHits([routes[0]],[50,16],p=>p,18).length,1,'touch tolerance');
 assert.deepEqual(contextualHits([routes[0]],[100,0],p=>[p[0]*2,p[1]*2])[0].origin,{x:50,y:0},'screen-space projection retains world anchor');
 console.log('Contextual hit testing passed');
+
+const {coverageEmphasis}=require('../web/route_visibility.js');
+const partial=coverageEmphasis(run([[[0,50],[114,50]]]));
+const slightlyMore=coverageEmphasis(run([[[0,50],[114.5,50]]]));
+const full=coverageEmphasis(run([[[0,50],[300,50],[300,150],[0,150],[0,250],[300,250]]]));
+assert.ok(slightlyMore.opacity>partial.opacity,'partial-cell traversal changes emphasis continuously');
+assert.ok(full.opacity>partial.opacity&&full.width>partial.width,'greater coverage has stronger emphasis');
+assert.ok(full.opacity<=.7&&full.width<4,'context remains softer than the active route');
+assert.ok(coverageEmphasis(null).opacity>=.4,'secondary context remains identifiable');
+console.log('Coverage-only visual emphasis: continuous, bounded and independent of eligibility passed');

@@ -37,6 +37,14 @@ function routeVisibility(paths,width,height,config={}){
   });
   return {...best,passes:best.count>=grid.minimumCells,grid};
 }
+// A visual comparison only: eligibility still comes from routeVisibility.
+// Partial cell traversal makes emphasis continuous between qualifying-cell counts.
+function coverageEmphasis(result){
+  if(!result)return {opacity:.4,width:1.6};
+  const threshold=result.grid.minimumTraversal*result.grid.w;
+  const coverage=result.lengths.reduce((sum,length)=>sum+Math.min(1,Math.max(0,length)/threshold),0)/result.lengths.length;
+  return {opacity:.4+.3*coverage,width:1.6+1.2*coverage};
+}
 function contextualHits(routes,point,project,tolerance=12){
   return routes.map(route=>{
     let best=null;
@@ -49,10 +57,11 @@ function contextualHits(routes,point,project,tolerance=12){
     return best;
   }).filter(Boolean).sort((a,b)=>a.gap-b.gap||a.route.id.localeCompare(b.route.id));
 }
-if(typeof module!=='undefined')module.exports={routeVisibility,visibilityGrid,clippedLength,contextualHits};
+if(typeof module!=='undefined')module.exports={routeVisibility,visibilityGrid,clippedLength,contextualHits,coverageEmphasis};
 if(typeof window!=='undefined')window.ContextRoutes=class{
   constructor(map,actions={}){
-    this.actions=actions;this.visibleIds=new Set();
+    this.actions=actions;this.visibleIds=new Set();this.coverage=new Map();
+    this.emphasis=new URLSearchParams(location.search).get('contextEmphasis')==='1';
     this.map=map;this.config={...routeVisibilityDefaults};this.filtered=true;this.debug=new URLSearchParams(location.search).get('routeGrid')==='1';this.routes=[];
     map.node.addEventListener('pointerdown',event=>{this.pointerType=event.pointerType;});
     map.node.addEventListener('click',event=>{
@@ -74,6 +83,8 @@ if(typeof window!=='undefined')window.ContextRoutes=class{
     const title=document.createElement('summary');title.textContent='Experimental route visibility';controls.append(title);
     const toggle=(text,value,change)=>{const label=document.createElement('label'),input=document.createElement('input');input.type='checkbox';input.checked=value;input.onchange=()=>{change(input.checked);this.schedule();};label.append(input,document.createTextNode(text));controls.append(label);return input;};
     toggle('Apply grid filter',true,v=>this.filtered=v);toggle('Show debug grid',this.debug,v=>this.debug=v);
+    toggle('Compare coverage emphasis',this.emphasis,v=>this.emphasis=v).id='context-coverage-emphasis';
+    const note=document.createElement('p');note.textContent='Emphasis measures visible geometry. Service frequency and transfer data are not used.';controls.append(note);
     for(const [key,label] of [['gridSize','Grid size'],['rectangleFraction','Viewport fraction'],['minimumCells','Required cells'],['minimumTraversal','Cell-width traversal fraction']]){
       const row=document.createElement('label'),input=document.createElement('input');row.textContent=label;input.type='number';input.step=key.includes('Fraction')||key==='minimumTraversal'?'.05':'1';input.value=this.config[key];
       input.onchange=()=>{const next={...this.config,[key]:Number(input.value)};try{visibilityGrid(100,100,next);this.config=next;input.setCustomValidity('');this.schedule();}catch{input.setCustomValidity('Invalid grid settings');input.reportValidity();}};row.append(input);controls.append(row);
@@ -85,7 +96,12 @@ if(typeof window!=='undefined')window.ContextRoutes=class{
     })}));this.attach();}).catch(()=>this.status.textContent='Contextual route geometry unavailable; selected route is unaffected.');
   }
   dismiss(){this.card?.remove();this.card=null;this.previewId=null;this.paint();}
-  paint(){for(const [id,node] of this.nodes||[]){node.setAttribute('stroke',id===this.previewId?'#435c83':'#5c7189');node.setAttribute('stroke-width',id===this.previewId?4:2);node.style.opacity=this.visibleIds.has(id)?(id===this.previewId?'.85':'.55'):'0';}}
+  paint(){for(const [id,node] of this.nodes||[]){
+    const style=this.emphasis?coverageEmphasis(this.coverage.get(id)):{opacity:.55,width:2};
+    node.setAttribute('stroke',id===this.previewId?'#435c83':'#5c7189');
+    node.setAttribute('stroke-width',id===this.previewId?4:style.width);
+    node.style.opacity=this.visibleIds.has(id)?(id===this.previewId?'.85':style.opacity):'0';
+  }}
   preview(hits){
     const card=document.createElement('section');card.id='context-route-preview';card.setAttribute('aria-label','Nearby route preview');
     const close=document.createElement('button');close.textContent='×';close.setAttribute('aria-label','Close route preview');close.onclick=()=>this.dismiss();card.append(close);
@@ -124,7 +140,9 @@ if(typeof window!=='undefined')window.ContextRoutes=class{
     for(const route of this.routes){
       // Cull before expensive cell clipping; no route eligibility is inferred from bounds.
       const visible=route.paths.filter((_,i)=>{const box=route.bounds[i];return box[0]<=b[0]&&box[2]>=a[0]&&box[1]<=a[1]&&box[3]>=b[1];}).map(p=>p.map(screen));
-      const qualifies=visible.length&&(!this.filtered||routeVisibility(visible,rect.width,rect.height,this.config).passes);
+      const coverage=visible.length&&(this.filtered||this.emphasis)?routeVisibility(visible,rect.width,rect.height,this.config):null;
+      this.coverage.set(route.id,coverage);
+      const qualifies=visible.length&&(!this.filtered||coverage.passes);
       const show=route.id!==m.data.routeId&&qualifies;this.nodes.get(route.id).style.opacity=show?'.65':'0';this.nodes.get(route.id).setAttribute('tabindex',show?'0':'-1');if(show){shown++;this.visibleIds.add(route.id);}
     }
     if(this.previewId&&!this.visibleIds.has(this.previewId))this.dismiss();

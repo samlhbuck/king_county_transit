@@ -63,9 +63,27 @@ let socket;
 
   assert.equal(await evaluate(`document.querySelectorAll('.route-debug-grid rect').length`),9);
   const count=await evaluate(`[...document.querySelectorAll('.context-routes path')].filter(n=>Number(n.style.opacity)>0).length`);
+  const scaleComparisons=await evaluate(`(()=>{
+    const c=contextTest,view=[...c.map.view],results=[];
+    for(const factor of [.6,1,1.8]){
+      c.map.view=[...view];c.map.zoom(factor);c.emphasis=false;c.update();const baseline=[...c.visibleIds];
+      c.emphasis=true;c.update();results.push({baseline,emphasized:[...c.visibleIds]});
+    }
+    c.emphasis=false;c.map.view=view;c.map.setView();c.update();return results;
+  })()`);
+  for(const result of scaleComparisons)assert.deepEqual(result.emphasized,result.baseline,'same qualifying routes across zoom scales');
+
   await evaluate(`contextTest.filtered=false;contextTest.update()`);
   const all=await evaluate(`[...document.querySelectorAll('.context-routes path')].filter(n=>Number(n.style.opacity)>0).length`);
   assert.ok(all>=count,'unfiltered comparison shows at least filtered routes');
+  assert.equal(await evaluate(`contextTest.emphasis`),false,'baseline is default');
+  await evaluate(`window.baselineIds=[...contextTest.visibleIds];document.getElementById('context-coverage-emphasis').click();contextTest.update()`);
+  assert.deepEqual(await evaluate(`[...contextTest.visibleIds]`),await evaluate(`baselineIds`),'emphasis leaves qualification unchanged');
+  assert.ok(await evaluate(`[...contextTest.visibleIds].every(id=>{const n=contextTest.nodes.get(id);return Number(n.style.opacity)>=.4&&Number(n.style.opacity)<=.7&&Number(n.getAttribute('stroke-width'))<4&&n.getAttribute('tabindex')==='0';})`),'all contextual routes retain visibility and keyboard access');
+  await evaluate(`document.getElementById('context-coverage-emphasis').click();contextTest.update()`);
+  assert.ok(await evaluate(`[...contextTest.visibleIds].every(id=>contextTest.nodes.get(id).style.opacity==='0.55'&&contextTest.nodes.get(id).getAttribute('stroke-width')==='2')`),'baseline styling restored');
+  await evaluate(`document.getElementById('context-coverage-emphasis').click();contextTest.update()`);
+
   await evaluate(`contextTest.config.minimumCells=9;contextTest.filtered=true;contextTest.update()`);
   assert.ok(await evaluate(`contextTest.map.profileRouteLayer.querySelector('path')!==null`),'selected route still rendered');
   assert.equal(await evaluate(`contextTest.nodes.get(contextTest.map.data.routeId)?.style.opacity`),'0','selected not duplicated in contextual layer');
