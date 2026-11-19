@@ -49,7 +49,7 @@ let socket;
   await evaluate(`document.getElementById('frontage-position').dispatchEvent(new Event('change'));testMap.openProjectCard({OriginalAddress1:'Test address',CompletedDate:'2024-04-01',PermitTypeDesc:'New',HousingUnitsAdded:48,EstProjectCostNumeric:12600000,Description:'Apartment building',x:testMap.data.stops[0].x,y:testMap.data.stops[0].y})`);
   assert.ok(await evaluate(`document.getElementById('project-floating-card').textContent.includes('$12.6M')`));
   assert.ok(await evaluate(`document.getElementById('project-floating-card').textContent.includes('48')`));
-  assert.equal(await evaluate(`document.querySelectorAll('#project-floating-card button').length`),0);
+  assert.deepEqual(await evaluate(`[...document.querySelectorAll('#project-floating-card button')].map(b=>b.textContent)`),['How to explore'],'existing help remains available without a separate close button');
   await evaluate(`testMap.didPan=false;testMap.node.dispatchEvent(new MouseEvent('click',{bubbles:true}))`);
   assert.equal(await evaluate(`document.getElementById('project-floating-card')`),null);
   await evaluate(`testMap.fit();document.getElementById('map-all-stops').checked=true;document.getElementById('map-all-stops').dispatchEvent(new Event('change'));`);

@@ -96,7 +96,21 @@ function basemapZoom(pixelsPerWorld, pixelRatio=1){
   return Math.max(1,Math.min(19,Math.ceil(Math.log2(pixelsPerWorld*density/256))));
 }
 function zoningColor(name){return characterPalette[zoningCharacter(name)];}
-if (typeof module !== 'undefined') module.exports = {basemapZoom, zoningShimmers, housingZoningMismatch, characterPalette, projectCharacter, zoningCharacter, crowdedStopIds, projectColor, groupProjectsByStop, projectPositions, zoningColor};
+// Fit projected route bounds into a usable pixel rectangle without SVG letterboxing.
+function fittedRouteView(bounds, width, height, area, padding=24){
+  const [left,top,right,bottom]=area;
+  const unit=Math.max((bounds[2]-bounds[0])/Math.max(1,right-left-2*padding),
+    (bounds[3]-bounds[1])/Math.max(1,bottom-top-2*padding),1e-6);
+  return [(bounds[0]+bounds[2])/2-(left+right)/2*unit,
+    (bounds[1]+bounds[3])/2-(top+bottom)/2*unit,width*unit,height*unit];
+}
+function routeZoomWidth(view, scale, factor, frame){
+  // Retain the previous range, but allow at least twice a padded full-route fit,
+  // including views whose aspect ratio predates a resize or route handoff.
+  const maximum=Math.max(2400,frame[2]*2,frame[3]*2*view[2]/view[3],view[2]);
+  return Math.min(maximum,Math.max(scale*120,view[2]*factor));
+}
+if (typeof module !== 'undefined') module.exports = {fittedRouteView, routeZoomWidth, basemapZoom, zoningShimmers, housingZoningMismatch, characterPalette, projectCharacter, zoningCharacter, crowdedStopIds, projectColor, groupProjectsByStop, projectPositions, zoningColor};
 if (typeof window !== 'undefined') window.RouteMap = class {
   constructor(node, selectStop, selectProject) {
     this.node = node; this.selectStop = selectStop; this.selectProject = selectProject || (p=>this.highlightProject(p)); this.view = [0,0,800,850]; this.projects = [];
@@ -242,10 +256,47 @@ if (typeof window !== 'undefined') window.RouteMap = class {
     // Update during motion; a trailing debounce starves tiles while scrubbing.
     if(!this.tileFrame)this.tileFrame=requestAnimationFrame(()=>{this.tileFrame=null;this.drawTiles();});
   }
-  fit(){this.rideInterrupted=true;cancelAnimationFrame(this.rideFrame);this.rideFrame=null;this.view=[0,0,800,850];this.setView();}
+  routeFrameArea(){
+    const rect=this.node.getBoundingClientRect(),viewport=window.visualViewport;
+    let left=Math.max(rect.left,viewport?.offsetLeft||0),top=Math.max(rect.top,viewport?.offsetTop||0);
+    let right=Math.min(rect.right,(viewport?.offsetLeft||0)+(viewport?.width||innerWidth));
+    let bottom=Math.min(rect.bottom,(viewport?.offsetTop||0)+(viewport?.height||innerHeight));
+    // Offscreen initial layout: use the map's own box until it is visible.
+    if(right-left<80||bottom-top<80){left=rect.left;right=rect.right;top=rect.top;bottom=rect.bottom;}
+    for(const selector of ['.map-framing','.zoom','.map-hint','.route-tools','.mobile-nav',
+      '#frontage-lens','.map-zoning-toggle','#map-attribution','#mobile-detail-panel','#mobile-sheet',
+      '#project-floating-card','#explore-guide']){
+      const node=document.querySelector(selector);if(!node||node.hidden||!node.getClientRects().length)continue;
+      const r=node.getBoundingClientRect();
+      if(r.right<=left||r.left>=right||r.bottom<=top||r.top>=bottom)continue;
+      const above=Math.max(0,r.top-top),below=Math.max(0,bottom-r.bottom);
+      // Keep the larger unobscured vertical portion of the map.
+      if(Math.max(above,below)<80)continue;
+      if(above>=below)bottom=r.top-12;else top=r.bottom+12;
+    }
+    return [left-rect.left,top-rect.top,right-rect.left,bottom-rect.top];
+  }
+  routeFrameView(){
+    const rect=this.node.getBoundingClientRect();
+    if(!this.data||!rect.width||!rect.height)return [0,0,800,850];
+    const bounds=[Infinity,Infinity,-Infinity,-Infinity];
+    for(const geometry of this.data.route){
+      const paths=geometry.type==='LineString'?[geometry.coordinates]:geometry.type==='MultiLineString'?geometry.coordinates:[];
+      for(const path of paths)for(const point of path){
+        const [x,y]=this.xy(point);bounds[0]=Math.min(bounds[0],x);bounds[1]=Math.min(bounds[1],y);bounds[2]=Math.max(bounds[2],x);bounds[3]=Math.max(bounds[3],y);
+      }
+    }
+    if(!bounds.every(Number.isFinite))return [0,0,800,850];
+    return fittedRouteView(bounds,rect.width,rect.height,this.routeFrameArea());
+  }
+  fit(){
+    this.rideInterrupted=true;cancelAnimationFrame(this.rideFrame);this.rideFrame=null;
+    cancelAnimationFrame(this.profilePanFrame);this.profilePanFrame=null;
+    this.view=this.routeFrameView();this.setView();
+  }
   zoom(factor,x=this.view[0]+this.view[2]/2,y=this.view[1]+this.view[3]/2){
     this.rideInterrupted=true;cancelAnimationFrame(this.rideFrame);this.rideFrame=null;cancelAnimationFrame(this.profilePanFrame);
-    const width=Math.min(2400,Math.max(this.scale*120, this.view[2]*factor));factor=width/this.view[2];
+    const width=routeZoomWidth(this.view,this.scale,factor,this.routeFrameView());factor=width/this.view[2];
     this.view=[x-(x-this.view[0])*factor,y-(y-this.view[1])*factor,width,this.view[3]*factor];this.setView();
   }
   setProfilePath(profile){
@@ -309,7 +360,7 @@ if (typeof window !== 'undefined') window.RouteMap = class {
     this.rideFrame=requestAnimationFrame(frame);
   }
   centerProfilePin(){
-    if(!this.profilePin)return;
+    if(!this.profilePin||this.rideInterrupted)return;
     const [x,y]=this.xy([this.profilePin.x,this.profilePin.y]),[left,top,right,bottom]=this.profileFocusBounds();
     const start=[...this.view],dx=x-(left+right)/2,dy=y-(top+bottom)/2;
     const duration=window.matchMedia('(prefers-reduced-motion:reduce)').matches?0:240;
