@@ -349,3 +349,5 @@ body.route-loading #status::before{content:'';display:block;width:24px;height:24
 
 /* Apply only to geographic raster tiles, preserving route and zoning colors. */
 .geographic-tiles.subdued{filter:saturate(.35) contrast(.8) brightness(1.08)}
+
+#context-grid-metrics{max-width:100%;overflow:auto;font-size:11px;max-height:260px}

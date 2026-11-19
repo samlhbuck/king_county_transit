@@ -98,6 +98,7 @@ let socket;
   await sleep(150);
   assert.ok(await evaluate(`contextUpdates<=2`),'movement updates are coalesced');
 
+  if(process.env.GRID_MODE)await evaluate(`contextTest.config.mode=${JSON.stringify(process.env.GRID_MODE)};contextTest.config.minimumCells=3;contextTest.update()`);
   // Deterministic overlapping geometry; use real selection/back handlers with a
   // route payload fixture so this test does not depend on remote route analysis.
   await evaluate(`(()=>{
