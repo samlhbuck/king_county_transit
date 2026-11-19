@@ -346,3 +346,6 @@ body.route-loading #status::before{content:'';display:block;width:24px;height:24
 #active-route-description summary::before{content:'▸';margin-right:6px}
 #active-route-description[open] summary::before{content:'▾'}
 #active-route-description p{margin:0 0 10px;line-height:1.5}
+
+/* Apply only to geographic raster tiles, preserving route and zoning colors. */
+.geographic-tiles.subdued{filter:saturate(.35) contrast(.8) brightness(1.08)}

@@ -34,7 +34,7 @@ let socket;
   await send('Runtime.enable');
   await send('Page.enable');
 
-  await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
+  await send('Emulation.setDeviceMetricsOverride',{width:Number(process.env.TEST_WIDTH||390),height:844,deviceScaleFactor:1,mobile:!process.env.TEST_WIDTH});
   await send('Page.navigate',{url:(process.env.APP_URL || 'http://127.0.0.1:8000')+'/?offline=1'});
   let ready=false;
   for(let i=0;i<300;i++){ready=await evaluate(`!!document.querySelector('#dashboard:not([hidden]) .stop-marker')`);if(ready)break;await sleep(100);}
@@ -47,6 +47,17 @@ let socket;
   await sleep(300);
   assert.ok(await evaluate(`[...oldTiles].every(([key,node])=>testMap.tileNodes.get(key)===node)`),'revisited tiles retain identity');
   assert.ok(await evaluate(`[...oldTiles.values()].every(node=>node.style.display!=='none')`),'cached same-zoom tiles remain paintable');
+  const beforeStyle=await evaluate(`JSON.stringify({view:testMap.view,route:testMap.data.routeId,position:document.getElementById('frontage-position').value})`);
+  await evaluate(`document.getElementById('basemap-style').value='quiet';document.getElementById('basemap-style').dispatchEvent(new Event('change'))`);
+  await sleep(100);
+  assert.match(await evaluate(`getComputedStyle(testMap.tileLayer).filter`),/saturate/,'subdued raster style applied');
+  assert.equal(await evaluate(`getComputedStyle(testMap.profileRouteLayer).filter`),'none','route colors unaffected');
+  assert.equal(await evaluate(`document.getElementById('map-attribution').hidden`),false,'OSM attribution retained');
+  assert.equal(await evaluate(`JSON.stringify({view:testMap.view,route:testMap.data.routeId,position:document.getElementById('frontage-position').value})`),beforeStyle);
+  await evaluate(`document.getElementById('basemap-style').value='standard';document.getElementById('basemap-style').dispatchEvent(new Event('change'))`);
+  await sleep(100);
+  assert.equal(await evaluate(`getComputedStyle(testMap.tileLayer).filter`),'none','original style restored');
+  assert.ok(await evaluate(`[...oldTiles].every(([key,node])=>testMap.tileNodes.get(key)===node)`),'style switching reuses cached images');
   const updates=await evaluate(`new Promise(resolve=>{const m=testMap,draw=m.drawTiles;let frames=0,ticks=0;m.drawTiles=function(){frames++;return draw.call(this);};const timer=setInterval(()=>{m.view[0]+=ticks%2?1:-1;m.setView();if(++ticks===24){clearInterval(timer);m.drawTiles=draw;resolve(frames);}},16);})`);
   assert.ok(updates>3,'tiles update during sustained movement, before scrubbing stops');
 

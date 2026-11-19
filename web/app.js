@@ -531,7 +531,7 @@ if (typeof document !== 'undefined') {
     $('use-signals').textContent = `Description hints: ${mixed} mixed-use · ${institution} institutional · ${adu} accessory dwelling projects. These do not establish neighborhood form or zoning compliance.`;
 
     const mapProjects=projects;
-    routeMap.update(mapProjects, selected, {direction, selectedProject, topStops:topStops(rows,metric,$('housing-sort').value), permitCounts: Object.fromEntries(rows.map(row => [row.id, row.summary.permits])), projects: $('show-projects').checked, catchments: $('show-catchments').checked, allRoutePermits: $('map-all-stops').checked, geography: $('show-geography').checked, size: $('project-size').value, zoning: $('show-zoning').checked});
+    routeMap.update(mapProjects, selected, {direction, selectedProject, topStops:topStops(rows,metric,$('housing-sort').value), permitCounts: Object.fromEntries(rows.map(row => [row.id, row.summary.permits])), projects: $('show-projects').checked, catchments: $('show-catchments').checked, allRoutePermits: $('map-all-stops').checked, geography: $('show-geography').checked, basemapStyle: $('basemap-style').value, size: $('project-size').value, zoning: $('show-zoning').checked});
     $('comparison-note').textContent = `Gold rings mark the highest ${metric==='housing' ? labels[$('housing-sort').value] : labels[metric]} totals among stops in the selected direction(s); ties included. Filters change the totals. Point colors show suggested use; size shows the selected development measure. No rings when all totals are zero or negative.`;
     frontageLens.highlightStop(stop);
     $('focus-stop').disabled = !selected;
@@ -675,7 +675,7 @@ if (typeof document !== 'undefined') {
       if (data) $('route').value = data.routeId;
     } finally { clearTimeout(loadingReminder);busy = false; document.body.classList.remove('route-loading'); $('refresh').disabled = false; $('route').disabled = false; }
   }
-  for (const id of ['direction', 'project-status', 'work-type', 'metric', 'sort', 'housing-sort', 'show-projects', 'show-catchments', 'show-geography', 'project-size', 'show-zoning']) $(id).addEventListener('change', render);
+  for (const id of ['direction', 'project-status', 'work-type', 'metric', 'sort', 'housing-sort', 'show-projects', 'show-catchments', 'show-geography', 'basemap-style', 'project-size', 'show-zoning']) $(id).addEventListener('change', render);
   for (const id of ['start', 'end']) $(id).addEventListener('change', () => { markPreset('custom'); render(); });
   for (const button of document.querySelectorAll('[data-preset]')) button.addEventListener('click', () => applyPreset(button.dataset.preset));
   for (const button of document.querySelectorAll('[data-chart-metric]')) button.addEventListener('click', () => { $('metric').value = button.dataset.chartMetric; render(); });

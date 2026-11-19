@@ -408,6 +408,7 @@ if (typeof window !== 'undefined') window.RouteMap = class {
   }
   drawTiles(){
     const enabled=this.options?.geography;
+    this.tileLayer.classList.toggle('subdued',this.options?.basemapStyle==='quiet');
     this.tileLayer.style.display=enabled?'':'none';this.streetLayer.style.opacity=enabled?'.15':'1';
     document.getElementById('map-attribution').hidden=!enabled;
     if(!enabled)return;
