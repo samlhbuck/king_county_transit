@@ -1,3 +1,8 @@
+// Preserve catalog destination wording; do not infer an itinerary from geometry.
+function routeDescription(info) {
+  return [info?.description, info?.long_name].find(value => typeof value === 'string' && value.trim())?.trim()
+    || 'Route description and major destinations are unavailable.';
+}
 // Display names are route-local; source names and stop identity stay intact.
 function stopDisplayNames(stops) {
   const key = text => text.toLowerCase().replace(/\b(north|south|east|west|ne|nw|se|sw|n|s|e|w|avenue|ave|street|st|way|road|rd|boulevard|blvd)\b/g,'').replace(/[^a-z0-9]/g,'');
@@ -131,7 +136,7 @@ function presetRange(preset, data, today = seattleToday()) {
   }
   return null;
 }
-if (typeof module !== 'undefined') module.exports = {stopDisplayNames, closestStop, topStops, assignedStops, matchesStop, statusGroup, filterDevelopment, inPeriod, summarize, presetRange, sortChartRows, annualSummaries, statusClass, housingCost, rankDifferences, annualChange};
+if (typeof module !== 'undefined') module.exports = {routeDescription, stopDisplayNames, closestStop, topStops, assignedStops, matchesStop, statusGroup, filterDevelopment, inPeriod, summarize, presetRange, sortChartRows, annualSummaries, statusClass, housingCost, rankDifferences, annualChange};
 
 if (typeof document !== 'undefined') {
   const $ = id => document.getElementById(id);
@@ -169,6 +174,7 @@ if (typeof document !== 'undefined') {
   function updateGuide(){
     if(!data)return;
     $('guide-route').textContent=routeLabel();
+    $('guide-route-description').textContent=routeDescription(catalog.find(r=>r.route_id===data.routeId));
     const history=data.routeHistory;
     if(history?.service_start_date){
       const source=el('a','Service began '+history.service_start_date);source.href=history.source_url;source.target='_blank';source.rel='noopener noreferrer';
@@ -483,6 +489,8 @@ if (typeof document !== 'undefined') {
     $('selection-title').title = stop?.fullName || '';
     $('stop-full-name').textContent = stop?.fullName || '';
     $('map-route-title').textContent = routeLabel();
+    $('active-route-description-label').textContent = 'About '+routeLabel();
+    $('active-route-description-text').textContent = routeDescription(catalog.find(r=>r.route_id===data.routeId));
     $('continuation-note').hidden=data.routeId!=='1_100223';
     $('continuation-note').textContent=data.routeId==='1_100223'?'Includes Route 44 stops and development to Ballard.':'';
     $('map-direction').textContent = $('direction').selectedOptions[0]?.textContent || '';
@@ -635,6 +643,7 @@ if (typeof document !== 'undefined') {
         $('route-history').append(document.createTextNode(`Service began ${history.service_start_date}. `), link, document.createTextNode(` · ${history.note}`));
       } else $('route-history').textContent = 'Service opening date not yet known. Life of route is unavailable; use other presets or custom dates.';
       if (changed) {
+        $('active-route-description').open=false;
         [$('start').value, $('end').value] = presetRange(data.defaultPreset, data);
         markPreset(data.defaultPreset);
       }

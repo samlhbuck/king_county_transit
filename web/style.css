@@ -340,3 +340,9 @@ body.route-loading #status::before{content:'';display:block;width:24px;height:24
 #context-route-preview>button:first-child{float:right}
 #context-route-preview button[aria-pressed=true]{background:#435c83;color:white}
 .context-routes path:focus{outline:none;stroke:#435c83;stroke-width:4}
+
+#active-route-description{margin-bottom:10px;font-size:14px}
+#active-route-description summary{min-height:44px;display:flex;align-items:center;cursor:pointer;list-style:disclosure-closed}
+#active-route-description summary::before{content:'▸';margin-right:6px}
+#active-route-description[open] summary::before{content:'▾'}
+#active-route-description p{margin:0 0 10px;line-height:1.5}

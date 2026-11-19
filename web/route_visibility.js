@@ -94,7 +94,7 @@ if(typeof window!=='undefined')window.ContextRoutes=class{
     const choose=hit=>{
       this.previewId=hit.route.id;this.paint();
       const info=this.actions.describe?.(hit.route.id)||{};
-      detail.textContent=[info.name||hit.route.id,info.description||info.long_name||'Direction unavailable'].filter(Boolean).join(' · ');
+      detail.textContent=[info.name||hit.route.id,routeDescription(info)].filter(Boolean).join(' · ');
       for(const button of choices.children)button.setAttribute('aria-pressed',String(button.dataset.routeId===hit.route.id));
       explore.onclick=async()=>{explore.disabled=true;try{const ok=await this.actions.explore?.(hit.route.id,hit.origin);if(ok)this.dismiss();else detail.textContent='Unable to open route. Please retry.';}finally{explore.disabled=false;}};
     };

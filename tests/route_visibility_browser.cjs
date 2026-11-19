@@ -43,6 +43,24 @@ let socket;
   await evaluate(`(()=>{const proto=ContextRoutes.prototype,update=proto.update;proto.update=function(){window.contextTest=this;return update.call(this);};window.dispatchEvent(new Event('resize'));document.querySelector('.zoom button').click();})()`);
   await sleep(350);
   assert.ok(await evaluate(`contextTest.routes.length>0`));
+  async function checkDescription(expected) {
+    const state=()=>evaluate(`JSON.stringify({route:contextTest.map.data.routeId,view:contextTest.map.view,direction:document.getElementById('direction').value,position:document.getElementById('frontage-position').value,lens:document.getElementById('profile-lens-mode').getAttribute('aria-pressed'),zoning:document.getElementById('show-zoning').checked,back:document.getElementById('back-route').textContent})`);
+    const before=await state();
+    if(!process.env.TEST_WIDTH)await evaluate(`document.getElementById('mobile-details').click()`);
+    for(let i=0;i<2;i++){
+      await evaluate(`document.querySelector('#active-route-description summary').click()`);
+      assert.ok(await evaluate(`document.getElementById('active-route-description').open`),'reopenable active summary');
+      assert.equal(await evaluate(`document.getElementById('active-route-description-text').textContent`),expected);
+      await evaluate(`document.querySelector('#active-route-description summary').click()`);
+    }
+    if(!process.env.TEST_WIDTH)await evaluate(`document.getElementById('mobile-close-details').click()`);
+    await evaluate(`document.dispatchEvent(new Event('general-guide-request'))`);
+    assert.equal(await evaluate(`document.getElementById('guide-route-description').textContent`),expected,'guide has same catalog description');
+    await evaluate(`document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape'}))`);
+    assert.equal(await state(),before,'description and guide preserve all exploration state');
+  }
+  await checkDescription(await evaluate(`routeDescription(contextTest.actions.describe(contextTest.map.data.routeId))`));
+
   assert.equal(await evaluate(`document.querySelectorAll('.route-debug-grid rect').length`),9);
   const count=await evaluate(`[...document.querySelectorAll('.context-routes path')].filter(n=>Number(n.style.opacity)>0).length`);
   await evaluate(`contextTest.filtered=false;contextTest.update()`);
@@ -81,9 +99,11 @@ let socket;
   await evaluate(`contextTest.map.didPan=false;contextTest.map.node.dispatchEvent(new PointerEvent('click',{bubbles:true,clientX:tapPoint[0],clientY:tapPoint[1],pointerType:${JSON.stringify(process.env.TEST_WIDTH?"mouse":"touch")}}))`);
   assert.equal(await evaluate(`document.querySelectorAll('#context-route-preview [data-route-id]').length`),2,'overlap chooser lists both routes');
   assert.equal(await evaluate(`document.querySelector('#context-route-preview>button:last-child').textContent`),'Explore route','no unverified transfer claim');
+  assert.ok(await evaluate(`document.querySelector('#context-route-preview p').textContent.includes(routeDescription(contextTest.actions.describe(contextTest.previewId)))`),'preview uses the same description');
   await evaluate(`[...document.querySelectorAll('#context-route-preview [data-route-id]')].find(b=>b.dataset.routeId===testRoute).click();document.querySelector('#context-route-preview>button:last-child').click()`);
   for(let i=0;i<200;i++){if(await evaluate(`contextTest.map.data.routeId===testRoute&&!document.body.classList.contains('route-loading')`))break;await sleep(100);}
   assert.ok(await evaluate(`contextTest.map.data.routeId===testRoute`),'Explore activates route');
+  await checkDescription(await evaluate(`routeDescription(contextTest.actions.describe(testRoute))`));
   assert.ok(await evaluate(`Number(document.getElementById('frontage-position').value)>0`),'handoff starts along route');
   assert.ok(await evaluate(`Math.abs(contextTest.map.view[2]-originalView[2])<.01`),'zoom preserved');
   assert.ok(await evaluate(`!document.getElementById('context-route-back').hidden`),'previous route action visible');
@@ -103,6 +123,14 @@ let socket;
   await evaluate(`contextTest.map.didPan=false;document.querySelector('.project-marker').dispatchEvent(new MouseEvent('click',{bubbles:true,clientX:tapPoint[0],clientY:tapPoint[1]}))`);
   assert.equal(await evaluate(`!!document.getElementById('context-route-preview')`),false,'permit click is not intercepted');
   console.log('Overlap chooser, touch click, route activation, anchored scrubber, preserved zoom and previous route passed');
+  await evaluate(`document.getElementById('route').value=testRoute;document.getElementById('route').dispatchEvent(new Event('change'))`);
+  for(let i=0;i<200;i++){if(await evaluate(`contextTest.map.data.routeId===testRoute&&!document.body.classList.contains('route-loading')`))break;await sleep(100);}
+  assert.ok(await evaluate(`contextTest.map.data.routeId===testRoute`),'ordinary selector activates route');
+  await checkDescription(await evaluate(`routeDescription(contextTest.actions.describe(testRoute))`));
+  await evaluate(`window.savedDescription={...contextTest.actions.describe(testRoute)};Object.assign(contextTest.actions.describe(testRoute),{description:'',long_name:''});document.getElementById('show-zoning').checked=true;document.getElementById('show-zoning').dispatchEvent(new Event('change'))`);
+  await checkDescription('Route description and major destinations are unavailable.');
+  await evaluate(`Object.assign(contextTest.actions.describe(testRoute),savedDescription)`);
+  console.log('Active descriptions: contextual and ordinary selection, missing metadata, reopening and state preservation passed');
   await send('Page.navigate',{url:(process.env.APP_URL || 'http://127.0.0.1:8000')+'/?offline=1'});
   for(let i=0;i<300;i++){if(await evaluate(`!!document.querySelector('#dashboard:not([hidden]) .stop-marker')`))break;await sleep(100);}
   assert.equal(await evaluate(`document.querySelector('.context-routes')`),null,'default app has no contextual layer');
