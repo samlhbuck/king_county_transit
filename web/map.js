@@ -300,6 +300,7 @@ if (typeof window !== 'undefined') window.RouteMap = class {
     this.view=[x-(x-this.view[0])*factor,y-(y-this.view[1])*factor,width,this.view[3]*factor];this.setView();
   }
   setProfilePath(profile){
+    this.contextRoutes?.setTransferProfile(this.data,profile);
     if(!this.profileRouteLayer)return;
     this.profileRouteLayer.replaceChildren();
     this.activeProfileId=profile?.id;
@@ -310,6 +311,7 @@ if (typeof window !== 'undefined') window.RouteMap = class {
     this.profileProgress=this.el('path',{class:'route-progress',fill:'none',stroke:'#078362','stroke-width':5,'vector-effect':'non-scaling-stroke'},this.profileRouteLayer);
   }
   setProfileProgress(profile,distance){
+    this.contextRoutes?.setTransferProgress(distance);
     if(!this.profileProgress)return;
     const points=[];
     for(let i=0;i<profile.vertices.length;i++){

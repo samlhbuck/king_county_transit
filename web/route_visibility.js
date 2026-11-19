@@ -88,6 +88,31 @@ function coverageEmphasis(result){
   const coverage=result.lengths.reduce((sum,length)=>sum+Math.min(1,Math.max(0,length)/threshold),0)/result.lengths.length;
   return {opacity:.4+.3*coverage,width:1.6+1.2*coverage};
 }
+// Only shared boarding-stop identities are verified by the present cache.
+// Nearby-only matches have no validated walking path and cannot drive this cue.
+function verifiedTransferPoints(data,profile){
+  const physicalByBoarding=new Map();
+  for(const stop of data?.stops||[])for(const id of stop.oba_stop_ids||[])physicalByBoarding.set(id,stop.id);
+  const points=[];
+  for(const stop of profile?.stops||[]){
+    if(!Number.isFinite(stop.distanceFeet))continue;
+    const physical=physicalByBoarding.get(stop.id);
+    for(const connection of data?.transfers?.stops?.[physical]||[]){
+      if(connection.routeId===data.routeId||!connection.sameStop)continue;
+      if(!connection.boardingLocations?.some(location=>location.sameStop&&location.id===stop.id))continue;
+      points.push({routeId:connection.routeId,boardingId:stop.id,distanceFeet:stop.distanceFeet});
+    }
+  }
+  return points;
+}
+function transferProximity(points,distance,range=600){
+  const weights=new Map();if(!Number.isFinite(distance)||!(range>0))return weights;
+  for(const point of points){
+    const t=1-Math.min(1,Math.abs(distance-point.distanceFeet)/range),weight=t*t*(3-2*t);
+    if(weight>0)weights.set(point.routeId,Math.max(weights.get(point.routeId)||0,weight));
+  }
+  return weights;
+}
 function contextualHits(routes,point,project,tolerance=12){
   return routes.map(route=>{
     let best=null;
@@ -100,11 +125,13 @@ function contextualHits(routes,point,project,tolerance=12){
     return best;
   }).filter(Boolean).sort((a,b)=>a.gap-b.gap||a.route.id.localeCompare(b.route.id));
 }
-if(typeof module!=='undefined')module.exports={routeVisibility,visibilityGrid,clippedLength,contextualHits,coverageEmphasis,analyzeContextRoutes};
+if(typeof module!=='undefined')module.exports={routeVisibility,visibilityGrid,clippedLength,contextualHits,coverageEmphasis,analyzeContextRoutes,verifiedTransferPoints,transferProximity};
 if(typeof window!=='undefined')window.ContextRoutes=class{
   constructor(map,actions={}){
     this.actions=actions;this.visibleIds=new Set();this.coverage=new Map();
     this.emphasis=new URLSearchParams(location.search).get('contextEmphasis')==='1';
+    this.transferEnabled=new URLSearchParams(location.search).get('contextTransfers')==='1';
+    this.transferPoints=[];this.transferPosition=null;this.transferWeights=new Map();
     this.map=map;this.config={...routeVisibilityDefaults};
     const initialMode=new URLSearchParams(location.search).get('contextGrid');if(['square','calibrated'].includes(initialMode))this.config.mode=initialMode;
     this.filtered=true;this.debug=new URLSearchParams(location.search).get('routeGrid')==='1';this.routes=[];
@@ -129,7 +156,8 @@ if(typeof window!=='undefined')window.ContextRoutes=class{
     const toggle=(text,value,change)=>{const label=document.createElement('label'),input=document.createElement('input');input.type='checkbox';input.checked=value;input.onchange=()=>{change(input.checked);this.schedule();};label.append(input,document.createTextNode(text));controls.append(label);return input;};
     toggle('Apply grid filter',true,v=>this.filtered=v);toggle('Show debug grid',this.debug,v=>this.debug=v);
     toggle('Compare coverage emphasis',this.emphasis,v=>this.emphasis=v).id='context-coverage-emphasis';
-    const note=document.createElement('p');note.textContent='Emphasis measures visible geometry. Service frequency and transfer data are not used.';controls.append(note);
+    toggle('Compare shared-stop transfer emphasis',this.transferEnabled,v=>{this.transferEnabled=v;this.setTransferProgress(this.transferPosition);}).id='context-transfer-emphasis';
+    const note=document.createElement('p');note.textContent='Coverage emphasis measures visible geometry. Transfer emphasis uses cached shared boarding stops; schedules and walking connections are unverified.';controls.append(note);
     const modeLabel=document.createElement('label');modeLabel.textContent='Grid comparison';
     const mode=document.createElement('select');mode.id='context-grid-mode';
     for(const [id,label] of [['baseline','A · Original rectangular grid'],['square','B · Expanded square cells'],['calibrated','C · Candidate-span calibrated cells']])mode.add(new Option(label,id));
@@ -145,12 +173,23 @@ if(typeof window!=='undefined')window.ContextRoutes=class{
       const bounds=[Infinity,Infinity,-Infinity,-Infinity];for(const [x,y]of path){bounds[0]=Math.min(bounds[0],x);bounds[1]=Math.min(bounds[1],y);bounds[2]=Math.max(bounds[2],x);bounds[3]=Math.max(bounds[3],y);}return bounds;
     })}));this.attach();}).catch(()=>this.status.textContent='Contextual route geometry unavailable; selected route is unaffected.');
   }
+  setTransferProfile(data,profile){
+    this.transferRouteId=data?.routeId;this.transferPoints=verifiedTransferPoints(data,profile);this.setTransferProgress(null);
+  }
+  setTransferProgress(distance){
+    this.transferPosition=distance;
+    if(!this.transferEnabled&&!this.transferWeights.size)return;
+    this.transferWeights=this.transferEnabled?transferProximity(this.transferPoints,distance):new Map();
+    this.paint();
+  }
   dismiss(){this.card?.remove();this.card=null;this.previewId=null;this.paint();}
   paint(){for(const [id,node] of this.nodes||[]){
     const style=this.emphasis?coverageEmphasis(this.coverage.get(id)):{opacity:.55,width:2};
-    node.setAttribute('stroke',id===this.previewId?'#435c83':'#5c7189');
-    node.setAttribute('stroke-width',id===this.previewId?4:style.width);
-    node.style.opacity=this.visibleIds.has(id)?(id===this.previewId?'.85':style.opacity):'0';
+    const proximity=this.transferWeights.get(id)||0;
+    const color=proximity?`hsl(212 ${25+40*proximity}% ${45-5*proximity}%)`:'#5c7189';
+    node.setAttribute('stroke',id===this.previewId?'#435c83':color);
+    node.setAttribute('stroke-width',id===this.previewId?4:Math.max(style.width,proximity?2+proximity:0));
+    node.style.opacity=this.visibleIds.has(id)?(id===this.previewId?'.85':Math.max(style.opacity,proximity ? .55+.25*proximity : 0)):'0';
   }}
   preview(hits){
     const card=document.createElement('section');card.id='context-route-preview';card.setAttribute('aria-label','Nearby route preview');
@@ -169,6 +208,7 @@ if(typeof window!=='undefined')window.ContextRoutes=class{
   }
   attach(){
     const m=this.map;if(!m.data)return;
+    if(this.transferRouteId!==m.data.routeId){this.transferPoints=[];this.transferPosition=null;this.transferWeights.clear();}
     this.dismiss();this.layer?.remove();this.debugLayer?.remove();this.nodes=new Map();
     this.layer=m.el('g',{class:'context-routes','pointer-events':'none'});m.node.insertBefore(this.layer,m.catchmentLayer);
     this.debugLayer=m.el('g',{'pointer-events':'none',class:'route-debug-grid'});
