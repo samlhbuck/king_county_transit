@@ -1,279 +1,76 @@
-# King County Transit · Route Explorer
+# Route Lens
 
-A local interactive route dashboard built on the existing OneBusAway, Seattle
-permit, TOD and First Hill analysis modules. First Hill Streetcar is the default.
+**Explore Seattle one transit route at a time.**
 
-## Run
+[Open the experimental Route Lens demo](https://route-lens-production.up.railway.app/) · [Technical reference](docs/technical-reference.md) · [Deployment notes](docs/railway-deployment.md)
 
-```bash
+Route Lens starts from a different question than a trip planner: **where might this route take me?** Rather than asking for a destination and optimizing a journey, it invites people to explore a bus or streetcar line, understand the places along it, and discover other routes that extend their reach into the city.
+
+It is an independent, exploratory web application, not an official King County Metro or City of Seattle service.
+
+## Problem and audience
+
+Transit maps are good at showing lines and trip planners are good at finding the fastest path. Neither necessarily conveys what an individual route feels like geographically: which neighborhoods it crosses, how the landscape changes, or why an unfamiliar branch of the network might be worth exploring.
+
+Route Lens is for transit riders, people curious about their city, and civic analysts who want to investigate land use and development alongside transit. A user can enjoy browsing the network without learning zoning terminology; more technical layers are optional.
+
+## Explore the app
+
+- **Follow a route.** Select a line, move along its geometry using the route scrubber, and inspect stops without losing your geographic context.
+- **Discover connections.** Find nearby routes and stops on the map, explore route descriptions, and change which line you are investigating.
+- **Change lenses.** Compare present-day zoning along the route or inspect cached ground-elevation profiles where coverage exists.
+- **Investigate development.** Examine Seattle permit records, estimated project values, housing units added or removed, and differences among stop areas.
+- **Check departures.** Query OneBusAway for departures at selected stops when the live-data service is available.
+
+The **First Hill Streetcar** is a useful starting point for the zoning and development views. The [hosted demo](https://route-lens-production.up.railway.app/) is a testing release; the live deployment may not include every change documented in the repository. The link is supplied as a demo address, not as a guarantee of continuous uptime.
+
+### Screenshots and demonstration
+
+The hosted app above is the current visual demonstration. Representative desktop and mobile screenshots have not yet been committed to this repository; they should be captured from a verified release rather than represented by mockups.
+
+## Data and methods
+
+Route Lens combines public records and a purpose-built interactive map:
+
+| Input | Purpose |
+| --- | --- |
+| [OneBusAway](https://developer.onebusaway.org/) | Transit route shapes, stops, schedules, and available departure information |
+| Seattle permit records | Permits, project grouping, housing changes, and reported/estimated construction values |
+| Municipal zoning data | Current zoning context, including cached coverage for Seattle, Shoreline, Bellevue, and Redmond |
+| USGS elevation data | Cached terrain profiles for supported routes |
+| [OpenStreetMap](https://www.openstreetmap.org/copyright) | Geographic basemap context |
+
+The Python backend builds and caches route, stop, and development summaries; a browser-based JavaScript/SVG interface handles map navigation, route selection, and synchronized scrubbing. Tests cover route geometry, stop grouping, data summaries, map interactions, and mobile-sized layouts.
+
+For development analysis, the stop corridor is based on **1,760-foot straight-line buffers** around transit stops. Projects are assigned to nearby boarding stops using a bounded heuristic, with deduplication for route-wide totals. This is a deliberate approximation—not a pedestrian-network walkshed. Full definitions, edge cases, and test commands are in the [technical reference](docs/technical-reference.md).
+
+## Limitations and responsible interpretation
+
+- **Experimental product.** Some interactions require real-device verification; the public test deployment and repository development state can differ. Route shapes may have direction and branch ambiguities.
+- **Partial geographic and temporal coverage.** Development permits currently cover Seattle, not all of King County. Route and municipal data depend on cached snapshots and refresh dates. Some elevation profiles are unavailable.
+- **Permits are not buildings.** An issued permit does not establish construction or occupancy; reported values are not audited expenditure. Housing changes represent recorded permit information.
+- **Zoning is not built form.** The zoning strip approximates the current rules near the path; it neither reconstructs historic zoning nor measures street character exactly. Comparing permits with zoning does not demonstrate causation.
+- **Access is approximate.** Straight-line stop distances, route corridors, and nearby-service results do not establish safe or convenient walking access. Historical comparisons use current route geometry rather than reconstructing past service patterns.
+- **Live and offline limits.** Departure requests need the external service and an API key; the home-screen web app is not an offline package.
+
+## Run locally
+
+Requires Python 3 and an internet connection for uncached public data.
+
+~~~bash
+git clone https://github.com/samlhbuck/king_county_transit.git
+cd king_county_transit
 python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
 .venv/bin/python app.py
-```
+~~~
 
-Open **http://127.0.0.1:8000**. Use `--port 8001` for a different port. The
-server binds to localhost. Cached datasets load without an API key. Set
-`OBA_API_KEY=...` in the ignored `.env` file to retrieve uncached transit data or
-refresh route geometry and stops. The existing reference route catalog is used;
-if absent, it is retrieved through `src.oba`.
+Then open **http://127.0.0.1:8000**. A different port may be selected with the **--port** option.
 
-- Select a route, issue-date range, direction and comparison metric.
-- Filter current permit status and new construction versus alterations. Issued
-  status is not verification that construction has started.
-- Click a map stop, a stop comparison row or the stop selector to
-  update its development summary and project table.
-- Check OneBusAway for the next departures at a selected physical stop;
-  live predictions are labeled separately from scheduled times.
-- View permit counts, consolidated project counts, gross units added, units
-  removed, net units and estimated development value.
-- Pan/zoom the map, toggle projects/catchments, and reset filters or the map view.
-- Use **Refresh selected source** to retrieve route geometry/stops, Seattle
-  permits or Seattle streets. Downloads use the existing retrieval functions
-  and update their caches. Permit and street downloads can take several minutes.
-  Failed requests keep the previous dashboard visible.
+**Reproducibility note:** A fresh GitHub clone is not a fully packaged offline demo. Raw and processed data caches are intentionally excluded from Git. The program can retrieve supported inputs, but uncached route requests or source refreshes may require an **OBA_API_KEY** in a local, ignored **.env** file. The hosted Railway release uses a prepared snapshot bundled separately from this repository.
 
-The app uses OpenStreetMap tiles for full geographic context and cached Seattle
-street geometry as an offline fallback. No JavaScript CDN is required. Missing permit inputs are generated using `src.permits`; missing
-route or street inputs are downloaded through `src.oba` and `src.basemap`.
-Raw and processed data remain ignored by Git. Routes may have asymmetric directions, a single direction, branches or no
-direction grouping. Every source stop is retained exactly once. Nearby stops
-(within 500 feet) merge only when they share a parent station, or have matching
-normalized intersection names, even within the same direction group. Street-type
-abbreviations and omitted compass qualifiers are recognized; explicit conflicting
-qualifiers are not treated as equivalent. Differently named platforms can merge
-within 250 feet with opposite compass directions (or disjoint direction groups
-when compass metadata is missing). Every pair in a cluster must qualify, so
-nearby chains cannot collapse into one station. Merged labels preserve all source
-names, such as `MLK & Hill / Walker`. These rules apply to all routes. Ambiguous
-matches remain individual selectable stops. With a direction selected, the stop selector and comparison list follow that
-feed group’s departure order. Combined list order follows the first direction
-then additional branch/ungrouped stops;
-it is not a linear itinerary. Map markers show names only on selection or hover.
-Permit coverage is **Seattle**, not all of King County.
+See the [technical reference](docs/technical-reference.md) for source refresh commands and checks, and [Railway deployment notes](docs/railway-deployment.md) for how testing snapshots are prepared and shipped. GitHub pushes are **not** automatic production deployments.
 
-## Methods and existing analysis
+## Project status
 
-`src/route_explorer.py` adapts `tod.analyze_route` and reuses defaults from
-`analysis.first_hill`. The original First Hill script still runs with:
-
-```bash
-.venv/bin/python -m analysis.first_hill
-```
-
-The corridor is a union of 1,760-foot straight-line buffers around directional
-stops. The dashboard starts with the nearest original boarding stop within that radius
-in each available feed destination group. Around substantial bends, it can prefer
-a later boarding stop within 330 extra straight-line feet, then maps the assignment
-to its physical stop. The bounded departure heuristic is described in the
-[MVP update notes](docs/mvp-update-notes.md). Combined directions may assign a project to two different stops;
-route totals and combined physical-stop totals deduplicate records. Stop totals
-therefore need not sum to route totals. The selected boundary matches directional
-assignment areas, not a walking network. Incomplete feed directions are disclosed.
-Legacy TOD single-nearest-stop interfaces are preserved for existing analyses.
-
-Permit counts include all qualifying records, including dependent permits.
-Projects use the existing primary-permit consolidation by normalized address,
-description, type, value and housing outcomes. Each project's earliest issue
-date is used for filtering. The UI's end date is inclusive. Missing housing and
-cost values contribute zero to aggregates, with missing source fields shown as
-`—` in the table. Net units = added − removed. Permit estimates are not actual
-investment, and issued housing is not necessarily completed housing.
-
-## Checks
-
-With the cached data available:
-
-```bash
-.venv/bin/python -m unittest discover -s tests
-node tests/metrics.cjs
-```
-
-The Python suite checks adapter output against the existing stop profiles,
-empty corridors, stop grouping across route patterns and retrieval wiring. JavaScript tests check
-date boundaries, stop filtering, missing values and negative net units.
-
-With the application running, Node 22+ and Chrome installed:
-
-```bash
-node tests/browser_smoke.cjs
-```
-
-Set `CHROME_BIN` if Chrome is not in the default macOS location. This checks map
-selection, controls, error recovery and mobile layout, and saves screenshots to
-`/tmp/route-explorer-desktop.png` and `/tmp/route-explorer-mobile.png`. The refresh
-UI test simulates a download failure rather than replacing cached source data.
-
-## Route history and date presets
-
-`data/reference/route_history.json` stores sourced passenger-service opening
-dates keyed by OneBusAway route ID, including source URLs, notes and check dates.
-Initial entries cover RapidRide G Line, First Hill Streetcar and South Lake Union
-Streetcar. Add verified entries here as more route history becomes available;
-restart the server after editing. Transit refreshes do not overwrite this file.
-An opening date is not inferred from when a route was first downloaded.
-
-Known routes default to **Life of route**; unknown routes default to **All
-available**, with the life preset disabled. **YTD**, **1 year**, **5 years** and
-**Life of route** end today in Seattle time, with inclusive boundaries. Rolling
-years start on the same calendar date, clamping February 29 to February 28 when
-needed. The 1/5-year presets and custom dates may include pre-opening development
-for comparison. All available starts at the earliest cached qualifying permit.
-A visible coverage note identifies the latest cached qualifying permit date;
-that date is not a guarantee that the entire period is complete.
-
-Historical windows use the current route geometry, not historical alignments or
-predecessor routes. Opening dates are service dates, not construction start dates.
-
-## Development charts and municipal coverage
-
-Housing charts show green additions to the right of zero and red removals to the
-left, with net units labeled. Removals include demolition and other recorded
-housing losses, not a count of demolition permits. Use either Compare stops by selector; both expose the same metrics. Gold rings
-on the map identify leading stops for the selected metric and filters, including ties. Stop bars can sort by route
-order, highest/lowest metric or name; the housing view can sort by net, gross
-added or removed units. Selection follows the stop ID when sorting.
-
-The annual chart follows stop selection along with the stop summary and project
-table; All stops restores route-wide totals. Partial years reflect
-the inclusive date filter. Totals for overlapping routes should not be added
-because a project can belong to multiple route corridors.
-
-[Adjacent municipality data research](docs/municipal-development-data.md)
-records official acquisition paths and a directly inspected Shoreline API schema.
-Shoreline's public point layer lacks units and valuation, so a fuller export is
-needed before importing comparable housing/value metrics. Adjacent-city data is
-not yet loaded; the dashboard explicitly labels Seattle-only coverage.
-
-See [the latest MVP update notes](docs/mvp-update-notes.md) for project-status
-badges, project significance, the Taylor Avenue reconciliation, directional access, map selection,
-cost/rank/trend metrics, current zoning, Link opening dates and design limitations.
-
-## Current priorities
-
-[The agreed feature stack](docs/priorities.md) records the current scope and deferred work.
-Filters and dates open in a dialog; the active selection remains visible beside
-an Edit filters button above the map. Clicking a project row highlights and focuses
-its point. Comparison lists show departure positions or metric ranks (ties share a
-rank). Selecting a physical stop also shows cached connecting routes, distinguishing
-same boarding stops from nearby locations in button tooltips. Click a connecting
-line to focus its nearest stop, and use Back to restore the previous route and view.
-
-The map shows a prominent route title and concise stop names, with full source
-names in stop details. All stops shows corridor-wide projects by default. Assignment
-polygons are optional under Explain assignment areas; they represent project
-assignments, not walking reachability. The stop comparison list scrolls separately
-so the desktop map remains alongside it.
-
-## Explore from your location
-
-Use **Use my location** for a one-time browser location request (HTTPS or localhost),
-or pan the map and choose **Use map center**. A blue marker shows the origin; device
-locations also show the reported accuracy circle. **Clear origin** removes it.
-Coordinates stay in page memory and are not sent to the app API or persisted.
-Online basemap tiles still load for the visible map extent when enabled.
-
-Nearby results list up to eight cached lines within 1 km, measured
-straight-line. Each line shows the nearest stop per cached destination direction;
-missing directions are labeled unavailable. Routes missing from
-local caches are unknown; distance is not a verified walking path or service
-availability. Choosing a direction selects that boarding location’s physical stop and feed
-direction; Back restores the prior route view. Origin discovery does not track moves.
-
-Location checks: `node tests/origins.cjs`, Python `test_origins.py`, and the browser
-smoke suite (simulated location success, denied permission and stale callbacks).
-
-## Along the route
-
-The map’s **Along the route · zoning profile** panel shows two bands of current
-zoning from the installed municipal caches beside a selected feed path, weighted by path distance. Choose a
-path, hover or drag the bands, or use the range slider (including arrow keys) to
-move a pink map pin without changing the selected stop or development filters.
-Clicking a stop tick selects and highlights its physical stop and updates the stop
-lens; if needed, the direction filter changes so that stop is visible. Explicit scrubbing pans an offscreen pin
-into view while preserving zoom; hovering does not pan.
-
-This is an experimental adjacent-zoning approximation: points are sampled 60 feet
-to each side of the path at roughly 100-foot intervals (at most 1,200 intervals
-per shape). It does not measure parcel frontage, exclude every wide roadway or
-establish actual neighborhood character. Unknown areas and conflicting zoning
-are retained. Separate feed shapes are not stitched into a presumed itinerary;
-paths without a direction association are labeled unverified. Tick positions use
-nearby source stops projected onto the shape; loops can make these ambiguous.
-Current zoning is independent of permit date filters.
-
-Checks: `node tests/frontage.cjs`, Python `test_frontage.py`, and the browser suite
-cover geometry interpolation, left/right reversal, unknown/overlapping zones,
-path selection, and map-pin updates without changing stop selection.
-
-## Municipal zoning caches
-
-Zoning now supports **Seattle, Shoreline, Bellevue and Redmond**; permit totals
-remain Seattle-only. The route strip and zoning overlay preserve each city's
-native descriptions and codes. The lens lists installed sources and retrieval
-dates; unmapped locations remain unknown.
-
-Download/refresh the three pilot municipalities with:
-
-```bash
-.venv/bin/python -m src.municipal_zoning shoreline bellevue redmond
-```
-
-Each is also available under **Refresh cached sources**. Imports validate IDs,
-counts and polygon geometry, clip to official city boundaries, and retain the old
-cache if validation fails. Each ignored cache preserves raw features, boundary
-geometry, metadata and normalized records. Restart a running server after a CLI
-refresh to clear its route-response cache; dashboard refresh clears it automatically.
-See [municipal data notes](docs/municipal-development-data.md) for source fields,
-import counts and coverage limits. No additional permit datasets are loaded.
-
-## Mobile nearby rides
-
-At phone widths (650 px or less), **Nearby rides** opens a map and bottom panel.
-Use your location or the map center to find cached boarding options, grouped by
-line and destination. Drag the panel handle up/down or tap it to change its height.
-The map stays visible above it. **Route details** opens the existing analysis;
-choosing a boarding option opens that stop's details. Switch back to Nearby rides
-to keep exploring from the same origin. No permission request runs on page load.
-
-The initial ordering uses straight-line proximity. It does not yet estimate
-walking routes, waiting time, evening/weekend usefulness or personal “gravity.”
-A browser with mobile-sized emulation can preview the layout at localhost; using
-browser location on a deployed phone-accessible site will require HTTPS.
-
-## Selected-route departures and linked trips
-
-**Check departures** gives the selected route its own section so frequent nearby
-routes cannot crowd it out. If absent from the next two hours, it searches daily
-OneBusAway schedules through seven days ahead (bounded to 24 schedule requests
-and a 45-second between-request budget). Search failures or incomplete coverage
-are shown explicitly. Longer waits show a Seattle date and time. Other routes at
-the same physical stop retain their separate two-hour list.
-
-Where available, departures show explicit previous/next scheduled trip links to
-other routes, including potential 43/44 continuations. These are same-vehicle
-schedule relationships, not confirmation that passengers can stay aboard. A
-continuation map, verified round-trip pairing and ride badges remain future work.
-
-API references: [daily stop schedules](https://developer.onebusaway.org/api/where/methods/schedule-for-stop),
-[trip details](https://developer.onebusaway.org/api/where/elements/trip-details).
-
-
-## Terrain elevation
-
-Choose **Elevation** above the route scrubber to see a cached USGS terrain
-profile instead of the zoning bands. Both directions of First Hill and South
-Lake Union Streetcars have pilot snapshots. Scrubbing and map-stop selection
-share the profile position; explicit camera movement still overrides following.
-The chart labels feet and distance, with independent axis scales. It describes
-ground terrain, which can differ from bridge or tunnel height.
-
-Prepare another route or refresh snapshots explicitly:
-
-```bash
-.venv/bin/python -m src.elevation 23_102638 23_100340
-```
-
-Add `--refresh` to requery existing snapshots, then restart the app. Runtime
-scrubbing never queries the elevation service. Uncached or changed geometry shows
-Elevation unavailable. [Elevation data notes](docs/elevation-data.md) document
-provenance, sampling, datum, caching, limitations and release inclusion.
+Route Lens is active, iterative work. The demo and map-first experience are the portfolio focus; feature ideas and research proposals are not presented as implemented results. This repository documents both delivered behavior and known limitations.
