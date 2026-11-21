@@ -227,7 +227,11 @@ if (typeof document !== 'undefined') {
     if (parent) parent.append(node);
     return node;
   }
-  const routeMap = new window.RouteMap($('map'), (id,stopArea) => selectStop(id,stopArea), p => selectProject(p));
+  const routeMap = new window.RouteMap($('map'), (id,stopArea,boardingId) => {
+    const oppositeDirection=frontageLens.chooseOppositeStop(boardingId);
+    if(oppositeDirection&&data.directions.some(d=>d.id===oppositeDirection))$('direction').value=oppositeDirection;
+    selectStop(id,stopArea,{boardingId});
+  }, p => selectProject(p));
   if(new URLSearchParams(location.search).get('contextRoutes')==='1')routeMap.contextRoutes=new window.ContextRoutes(routeMap,{
     describe:id=>catalog.find(r=>r.route_id===id),
     explore:async(id,origin)=>{if(busy||!catalog.some(r=>r.route_id===id))return false;const previous=snapshot();$('route').value=id;await load(false,{origin,previous,contextual:true});return data?.routeId===id;}
@@ -248,8 +252,12 @@ if (typeof document !== 'undefined') {
     if (direction && !direction.stopOrder.includes(stop.id)) {
       $('direction').value = data.directions.find(d => (d.id === frontageLens.profile?.directionId) && d.stopOrder.includes(stop.id))?.id || '';
     }
-    if(options.fromScrub&&selected===stop.id&&!selectedProject)return;
-    selectStop(stop.id,false,options);
+    if(options.fromScrub&&selected===stop.id&&selectedBoardingId===boardingId&&!selectedProject)return;
+    selectStop(stop.id,false,{...options,boardingId});
+  }, (directionId,boardingId)=>{
+    $('direction').value=data.directions.some(d=>d.id===directionId)?directionId:'';
+    const stop=data.stops.find(s=>s.oba_stop_ids.includes(boardingId));
+    selectStop(stop?.id||'',false,{fromScrub:true,boardingId});
   });
   for(const [id,event] of [['profile-lens-mode','click'],['show-zoning','change'],['frontage-path','change']])$(id).addEventListener(event,()=>{closeGuide();if(mobileRides.mode==='details')mobileRides.setMode('map');});
   function fit() { routeMap.fit(); }
@@ -261,7 +269,7 @@ if (typeof document !== 'undefined') {
   });
   $('open-feedback').addEventListener('click',()=>document.dispatchEvent(new Event('feedback-open')));
   function zoom(factor) { routeMap.zoom(factor); }
-  function makeMap(handoff) { routeMap.load(data); frontageLens.load(data,handoff); }
+  function makeMap(handoff) { selectedBoardingId=handoff?.boardingId; routeMap.load(data); frontageLens.load(data,handoff); }
   function stats(target, summary, available=true) {
     target.replaceChildren();
     for (const [key, label] of Object.entries(labels).filter(([key])=>["permits","net","value"].includes(key))) {
@@ -312,13 +320,19 @@ if (typeof document !== 'undefined') {
     }
     $('comparison-coverage').textContent=`Both rings group by current zoning. Pale residential segments within development slices identify explicit new single-family construction. Category totals include these segments. Seattle permits only.${missing?' '+missing+' records lack this measure.':''}${!available?' Development data unavailable for this area; Seattle permit coverage only.':!total?' No measured '+measureLabel.toLowerCase()+' in this selection.':''}${zone?.overlap?' Overlapping land categories: shares are not additive; wheel unavailable.':''}`;
   }
+  let selectedBoardingId;
   function selectStop(id,stopArea=false,options={}) {
+    selectedBoardingId=options.boardingId;
+    if(id && options.boardingId && !options.fromScrub){
+      const direction=data.directions.find(d=>d.id===$('direction').value);
+      if(direction&&!direction.stopOrder.includes(id))$('direction').value='';
+    }
     explicitStop=options.fromScrub?'':id;closeGuide();
     $('project-floating-card')?.remove();
     if(!id)$('map-all-stops').checked=true;else if(!options.fromScrub&&(stopArea||!selected))$('map-all-stops').checked=false;
     selectedProject='';selected=id;$('stop').value=id;render();
     if(id&&!options.fromScrub){
-      frontageLens.selectMapStop(data.stops.find(s=>s.id===id));
+      frontageLens.selectMapStop(data.stops.find(s=>s.id===id),options.boardingId);
       document.getElementById('project-floating-card')?.remove();
     }
     document.dispatchEvent(new CustomEvent('route-stop-selected',{detail:{map:routeMap,stop:data.stops.find(s=>s.id===id),preserveView:true}}));
@@ -334,7 +348,7 @@ if (typeof document !== 'undefined') {
     if (fromRow && !mobileRides.media.matches) $('map').scrollIntoView({block:'center',behavior:'smooth'});
   }
   function snapshot() {
-    return {route:data.routeId, stop:selected, project:selectedProject, view:[...routeMap.view],
+    return {route:data.routeId, stop:selected, boardingId:selectedBoardingId, project:selectedProject, view:[...routeMap.view],
       profileId:frontageLens.profile?.id, fraction:Number(frontageLens.slider.value)/1000,
       label:`${routeLabel()} · ${data.stops.find(s=>s.id===selected)?.name || 'All stops'}`,
       controls:Object.fromEntries(controlIds.map(id=>[id,$(id).value]))};
@@ -449,7 +463,7 @@ if (typeof document !== 'undefined') {
     frontageLens.syncDirection(direction);
     const orderedIds = (data.directions || []).find(d=>d.id === direction)?.stopOrder;
     const orderedStops = orderedIds ? orderedIds.map(id=>data.stops.find(s=>s.id===id)).filter(Boolean) : data.stops;
-    if (selected && !orderedStops.some(s=>s.id===selected)) { selected=''; selectedProject=''; }
+    if (selected && !orderedStops.some(s=>s.id===selected)) { selected=''; selectedBoardingId=undefined; selectedProject=''; }
     $('stop').replaceChildren(new Option('All stops', ''), ...orderedStops.map(s=>new Option(s.name,s.id)));
     $('stop').value = selected;
     const stopIndex=orderedStops.findIndex(s=>s.id===selected);
@@ -531,9 +545,9 @@ if (typeof document !== 'undefined') {
     $('use-signals').textContent = `Description hints: ${mixed} mixed-use · ${institution} institutional · ${adu} accessory dwelling projects. These do not establish neighborhood form or zoning compliance.`;
 
     const mapProjects=projects;
-    routeMap.update(mapProjects, selected, {direction, selectedProject, topStops:topStops(rows,metric,$('housing-sort').value), permitCounts: Object.fromEntries(rows.map(row => [row.id, row.summary.permits])), projects: $('show-projects').checked, catchments: $('show-catchments').checked, allRoutePermits: $('map-all-stops').checked, geography: $('show-geography').checked, basemapStyle: $('basemap-style').value, size: $('project-size').value, zoning: $('show-zoning').checked});
+    routeMap.update(mapProjects, selected, {direction, boardingId:selectedBoardingId, selectedProject, topStops:topStops(rows,metric,$('housing-sort').value), permitCounts: Object.fromEntries(rows.map(row => [row.id, row.summary.permits])), projects: $('show-projects').checked, catchments: $('show-catchments').checked, allRoutePermits: $('map-all-stops').checked, geography: $('show-geography').checked, basemapStyle: $('basemap-style').value, size: $('project-size').value, zoning: $('show-zoning').checked});
     $('comparison-note').textContent = `Gold rings mark the highest ${metric==='housing' ? labels[$('housing-sort').value] : labels[metric]} totals among stops in the selected direction(s); ties included. Filters change the totals. Point colors show suggested use; size shows the selected development measure. No rings when all totals are zero or negative.`;
-    frontageLens.highlightStop(stop);
+    frontageLens.highlightStop(stop,selectedBoardingId);
     $('focus-stop').disabled = !selected;
     $('map-all-stops').disabled=!selected;
     if(!selected)$('map-all-stops').checked=true;
@@ -658,6 +672,7 @@ if (typeof document !== 'undefined') {
         navigation.push(transition.previous);
       } else if (!refresh) navigation.length=0;
       makeMap(transition?.restore?{fraction:transition.restore.fraction,directionId:transition.restore.controls.direction}:handoff);
+      if(transition?.restore)selectedBoardingId=transition.restore.boardingId;
       if(transition?.restore?.profileId){frontageLens.path.value=transition.restore.profileId;frontageLens.showPath({fraction:transition.restore.fraction});}
       render();
       if (transition?.restore) { routeMap.view=[...transition.restore.view]; routeMap.setView(); }

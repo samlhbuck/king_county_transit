@@ -80,11 +80,12 @@ function projectPositions(projects) {
   }
   return positions;
 }
-// Screen-space clearance includes the 44px stop hit target, not just the icon.
+// Compare stop symbol footprints in screen pixels.
 function crowdedStopIds(points, clearance=44){
   const hidden=new Set();
   for(let i=0;i<points.length;i++)for(let j=i+1;j<points.length;j++){
-    if(Math.hypot(points[i].x-points[j].x,points[i].y-points[j].y)<clearance){
+    const minimum=(points[i].radius ?? clearance/2)+(points[j].radius ?? clearance/2);
+    if(Math.hypot(points[i].x-points[j].x,points[i].y-points[j].y)<minimum){
       hidden.add(points[i].id);hidden.add(points[j].id);
     }
   }
@@ -115,7 +116,8 @@ if (typeof window !== 'undefined') window.RouteMap = class {
   constructor(node, selectStop, selectProject) {
     this.node = node; this.selectStop = selectStop; this.selectProject = selectProject || (p=>this.highlightProject(p)); this.view = [0,0,800,850]; this.projects = [];
     this.ns = 'http://www.w3.org/2000/svg'; this.tileNodes = new Map();
-    const manual=()=>{this.rideInterrupted=true;cancelAnimationFrame(this.rideFrame);this.rideFrame=null;cancelAnimationFrame(this.profilePanFrame);};
+    this.showAllRouteStops=new URLSearchParams(location.search).get('showAllRouteStops')==='1';
+    const manual=()=>this.interruptRide();
     node.addEventListener('pointerdown',manual);node.addEventListener('wheel',manual,{passive:true});node.addEventListener('touchstart',manual,{passive:true});
     node.addEventListener('click',e=>{if(!this.didPan&&!e.target.closest('.project-marker'))document.getElementById('project-floating-card')?.remove();},true);
 
@@ -290,12 +292,11 @@ if (typeof window !== 'undefined') window.RouteMap = class {
     return fittedRouteView(bounds,rect.width,rect.height,this.routeFrameArea());
   }
   fit(){
-    this.rideInterrupted=true;cancelAnimationFrame(this.rideFrame);this.rideFrame=null;
-    cancelAnimationFrame(this.profilePanFrame);this.profilePanFrame=null;
+    this.interruptRide();
     this.view=this.routeFrameView();this.setView();
   }
   zoom(factor,x=this.view[0]+this.view[2]/2,y=this.view[1]+this.view[3]/2){
-    this.rideInterrupted=true;cancelAnimationFrame(this.rideFrame);this.rideFrame=null;cancelAnimationFrame(this.profilePanFrame);
+    this.interruptRide();
     const width=routeZoomWidth(this.view,this.scale,factor,this.routeFrameView());factor=width/this.view[2];
     this.view=[x-(x-this.view[0])*factor,y-(y-this.view[1])*factor,width,this.view[3]*factor];this.setView();
   }
@@ -342,6 +343,11 @@ if (typeof window !== 'undefined') window.RouteMap = class {
     const a=new DOMPoint(rect.left+rect.width*.2,top+(bottom-top)*.2).matrixTransform(inverse);
     const b=new DOMPoint(rect.right-rect.width*.2,bottom-(bottom-top)*.2).matrixTransform(inverse);
     return [a.x,a.y,b.x,b.y];
+  }
+  interruptRide(){
+    this.rideInterrupted=true;
+    cancelAnimationFrame(this.rideFrame);this.rideFrame=null;
+    cancelAnimationFrame(this.profilePanFrame);this.profilePanFrame=null;
   }
   beginRide(point){
     this.rideInterrupted=false;
@@ -575,34 +581,51 @@ if (typeof window !== 'undefined') window.RouteMap = class {
       }
     }
 
-    const directionStops = this.data.directions?.find(d=>d.id===this.options?.direction)?.stopOrder;
-    const visibleStops=this.data.stops.filter(stop=>!directionStops || directionStops.includes(stop.id));
-    const crowded=crowdedStopIds(visibleStops.map(stop=>{
-      const [x,y]=this.xy([stop.x,stop.y]);return {id:stop.id,x:x/unit,y:y/unit};
-    }),20);
-    for(const stop of this.data.stops){
-      if(directionStops && !directionStops.includes(stop.id))continue;
-      const[x,y]=this.xy([stop.x,stop.y]), selected=this.selected===stop.id;
-      const node=this.el('g',{class:'stop-marker',transform:`translate(${x},${y}) scale(${unit})`,'aria-pressed':String(selected),'data-stop-id':stop.id,opacity:!this.selected||selected?1:.75},this.stopLayer);
-      // Keep a selected stop as the one explicit anchor even at overview scale.
-      const hidden=crowded.has(stop.id) && !selected;
-      if(hidden){node.style.display='none';node.setAttribute('aria-hidden','true');}
-      this.el('circle',{class:'stop-hit-target',r:22,fill:'transparent','pointer-events':'all'},node);
-      if(this.options?.topStops?.includes(stop.id))this.el('circle',{class:'top-stop',r:10,fill:'none',stroke:'#b87800','stroke-width':3},node);
-      this.el('rect',{class:'stop-symbol',x:selected?-7:-5,y:selected?-7:-5,width:selected?14:10,height:selected?14:10,rx:3,fill:'#173f57',stroke:'white','stroke-width':2},node);
-      this.el('title',{},node).textContent=stop.fullName || stop.name;
-      this.button(node,`Select ${stop.name}`,()=>{
-        const now=Date.now();
-        const double=this.lastStopTap?.id===stop.id && now-this.lastStopTap.time<400;
-        this.lastStopTap=double?null:{id:stop.id,time:now};
-        this.selectStop(stop.id,double);
-        if(double)this.focusStop(stop.id);
-      });
-      node.addEventListener('dblclick',e=>{e.preventDefault();e.stopPropagation();this.selectStop(stop.id,true);this.focusStop(stop.id);});
-      if(hidden)node.setAttribute('tabindex','-1');
-    }
+    this.drawStops(unit);
     const status=document.getElementById('map-selection-note');
     if(status)status.textContent=this.options?.projects===false?'Project points hidden. Turn on Projects to show them.':this.selected&&!this.options?.allRoutePermits?`Showing only ${(this.byStop?.get(this.selected)||[]).length} projects assigned to this stop. Enable All route permits to restore the overview. Colocated records fan out with location lines.`:`Showing ${this.projects.length} corridor projects in the selected filters. Select a stop to narrow the view.`;
     if(status && showAreas) status.textContent += ' Shaded areas explain project assignment, not walking reach. Splits reflect different boarding directions and downstream preferences.';
   }
+  drawStops(unit){
+    const direction=this.options?.direction;
+    const physical=this.data.stops;
+    const order=this.data.directions?.find(d=>d.id===direction)?.stopOrder;
+    const boarding=this.data.boardingStops;
+    const stops=boarding || physical.filter(s=>!order||order.includes(s.id));
+    const points=stops.map(stop=>{
+      const [x,y]=this.xy([stop.x,stop.y]);
+      return {...stop,point:[x,y],x:x/unit,y:y/unit};
+    });
+    const selected=points.find(s=>(s.physicalId||s.id)===this.selected&&s.id===this.options?.boardingId)
+      || points.find(s=>(s.physicalId||s.id)===this.selected&&(!direction||s.directions?.includes(direction)))
+      || points.find(s=>(s.physicalId||s.id)===this.selected);
+    const symbols=points.map(stop=>({...stop,radius:this.options?.topStops?.includes(stop.physicalId||stop.id)
+      ? 12 : stop===selected?12:9}));
+    const crowded=this.showAllRouteStops?new Set():crowdedStopIds(symbols);
+    for(const stop of points){
+      if(!crowded.has(stop.id))this.drawStop(stop,unit,stop===selected);
+    }
+  }
+  drawStop(stop,unit,selected){
+    const id=stop.physicalId||stop.id;
+    const [x,y]=stop.point;
+    const node=this.el('g',{class:'stop-marker',transform:`translate(${x},${y}) scale(${unit})`,'aria-pressed':String(selected),'data-stop-id':id,'data-boarding-id':stop.physicalId?stop.id:'',opacity:!this.selected||selected?1:.75},this.stopLayer);
+    this.el('circle',{class:'stop-hit-target',r:22,fill:'transparent','pointer-events':'all'},node);
+    if(this.options?.topStops?.includes(id))this.el('circle',{class:'top-stop',r:10,fill:'none',stroke:'#b87800','stroke-width':3},node);
+    this.el('rect',{class:'stop-symbol',x:selected?-7:-5,y:selected?-7:-5,width:selected?14:10,height:selected?14:10,rx:3,fill:'#173f57',stroke:'white','stroke-width':2},node);
+    this.el('title',{},node).textContent=stop.fullName||stop.name;
+    this.button(node,`Select ${stop.name}`,()=>{
+      const now=Date.now();
+      const double=this.lastStopTap?.id===stop.id && now-this.lastStopTap.time<400;
+      this.lastStopTap=double?null:{id:stop.id,time:now};
+      this.selectStop(id,double,stop.physicalId?stop.id:undefined);
+      if(double&&this.rideFollow!==false)this.focusStop(id);
+    });
+    node.addEventListener('dblclick',e=>{
+      e.preventDefault();e.stopPropagation();
+      this.selectStop(id,true,stop.physicalId?stop.id:undefined);
+      if(this.rideFollow!==false)this.focusStop(id);
+    });
+  }
+
 };

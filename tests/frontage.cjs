@@ -26,3 +26,20 @@ console.log('Profile interpolation follows bends, endpoints and clamped distance
   assert.equal(south.vertices[0].y,0);
   console.log('Geographic profile orientation, zoning sides and discontinuities passed.');
 }
+{
+  const {opposingProfile,reversePosition}=require('../web/frontage.js');
+  const profile=(directionId,points)=>({
+    directionId,lengthFeet:(points.length-1)*100,
+    vertices:points.map(([x,y],i)=>({x,y,distanceFeet:i*100}))
+  });
+  const active=profile('north',[[0,0],[100,0],[200,0]]);
+  const couplet=profile('south',[[200,24],[150,24],[0,24]]);
+  const branch=profile('branch',[[220,80],[100,80],[0,80]]);
+  assert.equal(opposingProfile(active,[active,branch,couplet]),couplet);
+  assert.equal(reversePosition(active,couplet,.5).gap,24);
+  assert.ok(Math.abs(reversePosition(active,couplet,.5).fraction-2/3)<1e-9);
+  const loop=profile('clockwise',[[0,0],[100,0],[100,100],[0,100],[0,0]]);
+  const reversed=profile('counterclockwise',[[0,0],[0,100],[100,100],[100,0],[0,0]]);
+  assert.equal(opposingProfile(loop,[loop,reversed]),reversed);
+  assert.equal(reversePosition(loop,reversed,.25).fraction,.75);
+}

@@ -105,6 +105,8 @@ const stopPoints=[{id:'a',x:0,y:0},{id:'b',x:20,y:0},{id:'c',x:100,y:0}];
 assert.deepEqual([...crowdedStopIds(stopPoints)],['a','b']);
 assert.deepEqual([...crowdedStopIds(stopPoints.map(p=>({...p,x:p.x*3})))],[]);
 assert.deepEqual([...crowdedStopIds([{id:'a',x:0,y:0},{id:'b',x:44,y:0}])],[]);
+assert.deepEqual([...crowdedStopIds([{id:'a',x:0,y:0,radius:9},{id:'b',x:20,y:0,radius:12}])],['a','b']);
+assert.deepEqual([...crowdedStopIds([{id:'a',x:0,y:0,radius:9},{id:'b',x:21,y:0,radius:12}])],[]);
 for(const district of ['Seattle Mixed','Pioneer Square','International District','Master Planned Community — Yesler Terrace (MPC-YT)'])assert.equal(zoningColor(district),zoningColor('Neighborhood Commercial'));
 assert.equal(zoningColor('Master Planned Community'),zoningColor('Unknown / unmapped'));
 assert.notEqual(zoningColor('Seattle Mixed'),zoningColor('Unknown / unmapped'));

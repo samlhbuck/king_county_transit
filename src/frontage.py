@@ -356,6 +356,7 @@ def main_route_profile(route_data, zones, physical_stops, continuation=None):
             continue
         seen.add(identity)
         ticks.append(tick)
+    profile['boardingOccurrences'] = profile['stops']
     profile['stops'] = ticks
     profile['relationship'] = 'Main directional path; other alignments remain on the map'
     pieces, points = [], []
@@ -380,6 +381,6 @@ def main_route_profile(route_data, zones, physical_stops, continuation=None):
             if identity not in seen:
                 seen.add(identity)
                 ticks.append(tick)
-        alternatives.append({**candidate, 'stops': ticks})
+        alternatives.append({**candidate, 'stops': ticks, 'boardingOccurrences': candidate['stops']})
     return {'paths':[profile, *alternatives], 'offSpineStopIds':outside,
-            'method':'A main directional path with available alternative directions; each physical stop tick is shown once per path. Opposite directions and branches remain visible on the map and in route-wide analysis, but are not appended to scrub distance. A 43/44 overview retains its explicit feed join; it is not a dated trip itinerary.'}
+            'method':'A main directional path with available alternative directions; boarding stop occurrences follow the selected path. Opposite directions and branches remain visible on the map and in route-wide analysis, but are not appended to scrub distance. A 43/44 overview retains its explicit feed join; it is not a dated trip itinerary.'}

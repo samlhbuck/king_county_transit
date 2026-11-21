@@ -39,7 +39,7 @@ const secondRoute = process.env.ELEVATION_TEST_ROUTE || '23_100340';
 
   for(const [width,height,mobile] of [[1440,1000,false],[390,844,true]]){
     await send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile});
-    await send('Page.navigate',{url:(process.env.APP_URL||'http://127.0.0.1:8000')+'/?offline=1'});
+    await send('Page.navigate',{url:(process.env.APP_URL||'http://127.0.0.1:8000')+'/?offline=1&showAllRouteStops=1'});
     let ready=false;
     for(let i=0;i<300;i++){ready=await evaluate(`!!document.querySelector('#dashboard:not([hidden]) .stop-marker')`);if(ready)break;await sleep(100);}
     assert.ok(ready,'app loaded');
@@ -54,7 +54,7 @@ const secondRoute = process.env.ELEVATION_TEST_ROUTE || '23_100340';
     assert.ok(await evaluate(`document.getElementById('stop').value.length>0`),'scrubbing selects corresponding stop');
     assert.match(await evaluate(`document.getElementById('elevation-current').textContent`),/ft terrain/);
     assert.equal(await evaluate(`fetchCount`),0,'scrubbing and lens switching do not request data');
-    await evaluate(`document.getElementById('frontage-position').dispatchEvent(new Event('change'));testMap.fit();window.beforeStop=[...testMap.view];window.tick=testLens.profile.stops[2];window.stopId=testMap.data.stops.find(s=>s.oba_stop_ids.includes(tick.id)).id;document.querySelector('.stop-marker[data-stop-id='+CSS.escape(stopId)+']').dispatchEvent(new MouseEvent('click',{bubbles:true}));`);
+    await evaluate(`document.getElementById('frontage-position').dispatchEvent(new Event('change'));testMap.fit();window.beforeStop=[...testMap.view];window.tick=testLens.profile.stops[2];document.querySelector('.stop-marker[data-boarding-id='+CSS.escape(tick.id)+']').dispatchEvent(new MouseEvent('click',{bubbles:true}));`);
     await sleep(100);
     assert.ok(await evaluate(`Math.abs(Number(testLens.slider.value)/1000-tick.distanceFeet/testLens.profile.lengthFeet)<.002`),'map stop selects matching chainage');
     assert.deepEqual(await evaluate(`testMap.view`),await evaluate(`beforeStop`),'map stop does not recenter');

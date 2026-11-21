@@ -89,6 +89,14 @@ def build_dashboard_data(route_id=first_hill.ROUTE_ID):
     # Web Mercator display coordinates align with geographic map tiles.
     display_stops = stops.to_crs("EPSG:3857")
     projects = projects.to_crs("EPSG:3857")
+    boarding = tod.make_stops_gdf(route_data["stops"]).drop_duplicates("id").to_crs("EPSG:3857")
+    boarding["x"], boarding["y"] = boarding.geometry.x, boarding.geometry.y
+    boarding["physicalId"] = boarding.id.map(access["owners"])
+    boarding_directions = {}
+    for direction, candidates in access["candidates"].items():
+        for stop_id in candidates.id:
+            boarding_directions.setdefault(stop_id, []).append(direction)
+    boarding["directions"] = boarding.id.map(boarding_directions)
     for frame in (display_stops, projects):
         frame["x"] = frame.geometry.x
         frame["y"] = frame.geometry.y
@@ -139,6 +147,7 @@ def build_dashboard_data(route_id=first_hill.ROUTE_ID):
         "streets": [mapping(g) for g in streets.geometry],
         "route": [mapping(g) for g in results["route_lines_gdf"].to_crs("EPSG:3857").geometry],
         "corridor": mapping(gpd.GeoSeries([corridor], crs=tod.ANALYSIS_CRS).to_crs("EPSG:3857").iloc[0]),
+        "boardingStops": records(boarding, ["id", "physicalId", "name", "directions", "x", "y"]),
         "stops": records(display_stops, ["id", "route_position", "name", "oba_stop_ids", "x", "y"]),
         "projects": records(projects, ["OriginalAddress1", "Description", "IssuedDate", "CompletedDate",
             "NearestStopId", "StopAssignments", "HousingUnitsAdded", "HousingUnitsRemoved",

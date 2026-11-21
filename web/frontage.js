@@ -8,17 +8,59 @@ function profilePosition(profile,fraction){
   const t=(distance-a.distanceFeet)/(b.distanceFeet-a.distanceFeet || 1);
   return {x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t,distance};
 }
-function nearestProfilePosition(profile,point){
-  let best=null;
+function nearestProfilePosition(profile,point,heading=null,reference=null){
+  let best=null,bestScore=Infinity;
   for(let i=1;i<profile.vertices.length;i++){
     const a=profile.vertices[i-1],b=profile.vertices[i];
     if(b.breakBefore)continue;
     const dx=b.x-a.x,dy=b.y-a.y;
     const t=Math.max(0,Math.min(1,((point.x-a.x)*dx+(point.y-a.y)*dy)/(dx*dx+dy*dy||1)));
     const gap=Math.hypot(point.x-a.x-t*dx,point.y-a.y-t*dy);
-    if(!best||gap<best.gap)best={gap,fraction:(a.distanceFeet+t*(b.distanceFeet-a.distanceFeet))/profile.lengthFeet};
+    // Prefer the facing segment at crossings, with a bounded geographic penalty.
+    const alignment=heading?(heading.x*dx+heading.y*dy)/(Math.hypot(dx,dy)||1):0;
+    const fraction=(a.distanceFeet+t*(b.distanceFeet-a.distanceFeet))/profile.lengthFeet;
+    const score=gap+(heading?40*(1-alignment):0)+(reference==null?0:10*Math.abs(reference-fraction));
+    if(score<bestScore){
+      bestScore=score;
+      best=heading?{gap,fraction,score}:{gap,fraction};
+    }
   }
   return best;
+}
+function opposingProfile(active,profiles){
+  if(!active)return null;
+  const start=active.vertices[0],end=active.vertices.at(-1);
+  const gap=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+  let best=null,bestGap=Infinity;
+  for(const profile of profiles){
+    if(profile===active || (!profile.directionId && !profile.traversalPart))continue;
+    if(active.traversalPart && profile.directionId===active.directionId &&
+       profile.traversalPart && profile.traversalPart!==active.traversalPart)return profile;
+    if(!active.directionId || profile.directionId===active.directionId)continue;
+    const first=profile.vertices[0],last=profile.vertices.at(-1);
+    const reversed=gap(start,last)+gap(end,first);
+    const forward=gap(start,first)+gap(end,last);
+    if(reversed>=forward){
+      // A loop can share its start and end. Compare travel headings on the
+      // shared geometry when the terminals give no useful direction cue.
+      if(Math.abs(reversed-forward)>100)continue;
+      const samples=[.2,.4,.6,.8];
+      const oppositeCost=samples.reduce((sum,f)=>sum+(reversePosition(active,profile,f)?.score??Infinity),0);
+      const sameCost=samples.reduce((sum,f)=>sum+(reversePosition(active,profile,f,null,false)?.score??Infinity),0);
+      if(!(oppositeCost+20<sameCost))continue;
+    }
+    if(reversed<bestGap){best=profile;bestGap=reversed;}
+  }
+  return best;
+}
+function reversePosition(active,opposite,fraction,boarding=null,reverse=true){
+  const origin=boarding||profilePosition(active,fraction);
+  const before=profilePosition(active,Math.max(0,fraction-.002));
+  const after=profilePosition(active,Math.min(1,fraction+.002));
+  const sign=reverse?1:-1;
+  const dx=sign*(before.x-after.x),dy=sign*(before.y-after.y);
+  const length=Math.hypot(dx,dy);
+  return nearestProfilePosition(opposite,origin,length?{x:dx/length,y:dy/length}:null,reverse?1-fraction:fraction);
 }
 function orientProfile(profile){
   const points=profile.vertices;
@@ -36,19 +78,32 @@ function orientProfile(profile){
     sections:profile.sections?.map(interval).reverse()};
 }
 function frontageColor(name){return (typeof window!=='undefined'?window.zoningColor:require('./map.js').zoningColor)(name);}
-if(typeof module!=='undefined')module.exports={profilePosition,nearestProfilePosition,frontageColor,orientProfile};
+if(typeof module!=='undefined')module.exports={profilePosition,nearestProfilePosition,frontageColor,orientProfile,opposingProfile,reversePosition};
 if(typeof window!=='undefined')window.FrontageLens=class{
-  constructor(map,selectStop){
+  constructor(map,selectStop,changeDirection){
     this.map=map;this.selectStop=selectStop;this.selectedBoardingIds=[];
     this.panel=document.getElementById('frontage-lens');
     this.path=document.getElementById('frontage-path');
     this.slider=document.getElementById('frontage-position');
+    this.changeDirection=changeDirection;
+    this.reverseButton=document.getElementById('frontage-reverse');
+    this.reverseButton.addEventListener('click',()=>this.reverse());
+    this.rideButton=document.getElementById('frontage-ride');
+    this.map.rideFollow=true;
+    this.rideButton.addEventListener('click',()=>{
+      this.map.rideFollow=!this.map.rideFollow;
+      this.rideButton.setAttribute('aria-pressed',String(this.map.rideFollow));
+      if(!this.map.rideFollow){
+        this.map.interruptRide();
+        this.map.setProfilePin(this.position);
+      }
+    });
     this.elevation=new window.ElevationLens(this);
     this.path.addEventListener('change',()=>this.showPath());
     this.slider.addEventListener('input',()=>{this.startRide(Number(this.slider.value)/1000);this.preview(Number(this.slider.value)/1000,true);this.showDistance();});
     const strip=document.getElementById('frontage-strip');
     const hit=document.getElementById('frontage-scrub-hit');
-    const finish=()=>{clearTimeout(this.endpointTimer);this.scrubbing=false;document.getElementById('frontage-distance').hidden=true;this.map.setProfilePin(null);};
+    const finish=()=>{clearTimeout(this.endpointTimer);this.scrubbing=false;document.getElementById('frontage-distance').hidden=true;this.map.setProfilePin(this.map.rideFollow?null:this.position);};
     for(const target of [strip,this.slider,hit])for(const event of ['pointerup','pointercancel','blur','keyup','change'])target.addEventListener(event,finish);
     const scrub=e=>{
       if(!this.profile || (e.type==='pointermove' && !e.currentTarget.hasPointerCapture(e.pointerId)))return;
@@ -58,12 +113,15 @@ if(typeof window!=='undefined')window.FrontageLens=class{
       this.showDistance();
     };
     strip.addEventListener('pointermove',scrub);
-    strip.addEventListener('pointerdown',e=>{e.preventDefault();scrub(e);strip.setPointerCapture(e.pointerId);});
+    strip.addEventListener('pointerdown',e=>{
+      if(e.target.closest('button,input,#frontage-scrub-hit'))return;
+      e.preventDefault();scrub(e);strip.setPointerCapture(e.pointerId);
+    });
     hit.addEventListener('pointermove',scrub);
     hit.addEventListener('pointerdown',e=>{e.preventDefault();scrub(e);hit.setPointerCapture(e.pointerId);});
   }
   startRide(fraction){
-    if(!this.scrubbing&&this.profile)this.map.beginRide(profilePosition(this.profile,fraction));
+    if(this.map.rideFollow&&!this.scrubbing&&this.profile)this.map.beginRide(profilePosition(this.profile,fraction));
     this.scrubbing=true;
   }
   showDistance(){
@@ -76,8 +134,10 @@ if(typeof window!=='undefined')window.FrontageLens=class{
   load(data,handoff=null){
     document.getElementById('frontage-distance').hidden=true;
     this.map.setProfilePin(null);
-    this.profiles=[...(data.zoning?.frontage?.paths || [])].map(p=>orientProfile({...p,directionId:p.directionKey||p.directionId})).sort((a,b)=>b.lengthFeet-a.lengthFeet);
+    this.position=null;
+    this.profiles=[...(data.zoning?.frontage?.paths || [])].map(p=>orientProfile({...p,stops:p.boardingOccurrences||p.stops,directionId:p.directionKey||p.directionId})).sort((a,b)=>b.lengthFeet-a.lengthFeet);
     this.map.profileChoices=this.profiles;
+    this.boardingStops=new Map((data.boardingStops||[]).map(stop=>[stop.id,stop]));
     this.map.chooseProfile=id=>{this.path.value=id;this.showPath();};
     this.path.replaceChildren(...this.profiles.map(p=>{const option=new Option(p.name,p.id);option.title=p.feedName || p.name;return option;}));
     if(handoff?.directionId){const matching=this.profiles.find(p=>p.directionId===handoff.directionId);if(matching)this.path.value=matching.id;}
@@ -110,6 +170,21 @@ if(typeof window!=='undefined')window.FrontageLens=class{
     clearTimeout(this.endpointTimer);this.scrubbing=false;this.map.setProfilePin(null);
     this.profile=this.profiles.find(p=>p.id===this.path.value);
     const profile=this.profile;this.map.setProfilePath(profile);
+    this.opposite=opposingProfile(profile,this.profiles);
+    this.reverseButton.hidden=!this.opposite;
+    this.rideButton.hidden=!profile;
+    const oppositeTicks=document.getElementById('frontage-opposite-stops');
+    oppositeTicks.replaceChildren();
+    oppositeTicks.hidden=!this.opposite;
+    for(const stop of this.opposite?.stops||[]){
+      const boarding=this.boardingStops.get(stop.id);
+      const projection=reversePosition(this.opposite,profile,stop.distanceFeet/this.opposite.lengthFeet,boarding);
+      if(!projection)continue;
+      const tick=document.createElement('span');
+      tick.className='frontage-opposite-stop';tick.title=stop.name;
+      tick.style.left=`${projection.fraction*100}%`;
+      oppositeTicks.append(tick);
+    }
     this.elevation.load(profile,this.profiles);
     if(!profile){this.map.setProfilePin(null);return;}
     document.getElementById('frontage-path-note').textContent=`${profile.relationship || 'Route geometry'} · selected section highlighted; others muted.`;
@@ -154,13 +229,32 @@ if(typeof window!=='undefined')window.FrontageLens=class{
     this.preview(fraction,false);
     this.handoffPoint=nearest&&(handoff?.contextual||nearest.gap<=2000)?profilePosition(profile,fraction):null;
   }
-  highlightStop(stop){
-    this.selectedBoardingIds=stop?.oba_stop_ids || [];
+  reverse(){
+    if(!this.opposite)return;
+    const target=this.opposite;
+    const match=reversePosition(this.profile,target,Number(this.slider.value)/1000);
+    if(!match)return;
+    this.map.interruptRide();
+    this.path.value=target.id;
+    this.showPath({fraction:match.fraction});
+    this.map.setProfilePin(this.position);
+    this.changeDirection?.(target.directionId,this.indexStop?.id);
+  }
+  highlightStop(stop,boardingId){
+    this.selectedBoardingIds=boardingId?[boardingId]:stop?.oba_stop_ids||[];
     for(const tick of document.querySelectorAll('#frontage-stops .frontage-stop'))tick.setAttribute('aria-pressed',String(this.selectedBoardingIds.includes(tick.dataset.boardingId)));
   }
-  selectMapStop(stop){
+  chooseOppositeStop(boardingId){
+    if(!this.opposite || this.profile.stops.some(s=>s.id===boardingId))return;
+    const stop=this.opposite.stops.find(s=>s.id===boardingId);
+    if(!stop)return;
+    this.path.value=this.opposite.id;
+    this.showPath({fraction:stop.distanceFeet/this.opposite.lengthFeet});
+    return this.profile.directionId;
+  }
+  selectMapStop(stop,boardingId){
     if(!stop||!this.profile)return;
-    const ids=stop.oba_stop_ids||[];
+    const ids=boardingId?[boardingId]:stop.oba_stop_ids||[];
     let ticks=this.profile.stops.filter(s=>ids.includes(s.id));
     if(!ticks.length){
       const matching=this.profiles.find(p=>p.directionId===this.profile.directionId&&p.stops.some(s=>ids.includes(s.id)));
@@ -183,8 +277,9 @@ if(typeof window!=='undefined')window.FrontageLens=class{
     const profile=this.profile,point=profilePosition(profile,fraction);
     const sample=profile.samples.find(s=>s.endFeet!=null && point.distance<s.endFeet) || profile.samples[Math.min(profile.samples.length-1,Math.floor(fraction*profile.samples.length))];
     const nearest=profile.stops.reduce((best,stop)=>!best || Math.abs(stop.distanceFeet-point.distance)<Math.abs(best.distanceFeet-point.distance)?stop:best,null);
+    this.position=point;this.indexStop=nearest;
     this.slider.value=Math.round(fraction*1000);
-    const text=`${(point.distance/5280).toFixed(2)} mi${nearest?` · nearest route stop: ${nearest.name}`:''} · Left: ${sample.left} · Right: ${sample.right}`;
+    const text=`${(point.distance/5280).toFixed(2)} mi${nearest?` · nearest route stop: ${nearest.name}`:''} · Upper zoning: ${sample.left} · Lower zoning: ${sample.right}`;
     this.slider.setAttribute('aria-valuetext',text);
     document.getElementById('frontage-readout').textContent=text;
     document.getElementById('frontage-cursor').style.left=`${fraction*100}%`;
@@ -192,9 +287,9 @@ if(typeof window!=='undefined')window.FrontageLens=class{
     this.map.setProfileProgress(profile,point.distance);
     this.elevation.update(point.distance);
     if(this.scrubbing&&follow&&nearest)this.selectStop?.(nearest.id,profile.name,{fromScrub:true});
-    this.map.setProfilePin(this.scrubbing?point:null,follow);
+    this.map.setProfilePin(this.scrubbing||!this.map.rideFollow?point:null,follow&&this.map.rideFollow);
     clearTimeout(this.endpointTimer);
-    if(this.scrubbing&&follow&&!this.map.rideInterrupted&&!this.map.rideFrame&&(fraction<=.04||fraction>=.96)){
+    if(this.map.rideFollow&&this.scrubbing&&follow&&!this.map.rideInterrupted&&!this.map.rideFrame&&(fraction<=.04||fraction>=.96)){
       this.endpointTimer=setTimeout(()=>{if(this.scrubbing)this.map.centerProfilePin();},450);
     }
   }

@@ -33,8 +33,6 @@ if(typeof window!=='undefined')window.ElevationLens=class{
     for(const id of ['frontage-left','frontage-right'])document.getElementById(id).hidden=terrain;
     this.toggle.textContent=!available?'Elevation unavailable':terrain?'Current zoning':'Elevation';
     this.toggle.setAttribute('aria-pressed',String(terrain));
-    const labels=document.querySelectorAll('.frontage-side-labels span');
-    labels[0].textContent='Left';labels[1].textContent='Right';
     if(!available)document.getElementById('elevation-source').textContent='Elevation is unavailable for this cached route geometry.';
     else document.getElementById('elevation-source').textContent=`USGS 3DEP terrain · retrieved ${this.profile.elevation.retrievedAt.slice(0,10)}. Ground may differ from bridge or tunnel height.`;
     if(!terrain)return;
@@ -42,7 +40,6 @@ if(typeof window!=='undefined')window.ElevationLens=class{
     const values=this.profiles.flatMap(p=>p.elevation?.samples||[]).filter(s=>Number.isFinite(s.elevationMeters)).map(s=>s.elevationMeters/0.3048);
     const low=Math.floor(Math.min(...values)/50)*50,high=Math.max(low+100,Math.ceil(Math.max(...values)/50)*50);
     this.low=low;this.high=high;
-    labels[0].textContent=high+' ft';labels[1].textContent=low+' ft';
     let d='',connected=false;
     for(const s of samples){
       if(s.elevationMeters==null){connected=false;continue;}
