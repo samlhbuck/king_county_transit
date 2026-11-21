@@ -159,3 +159,10 @@ assert.equal(housingZoningMismatch({...contrast,CurrentZoning:'Downtown Mixed'})
   assert.equal(basemapZoom(256*2**22,2),19);
   console.log('Basemap resolution follows zoom and bounded screen density.');
 }
+
+{
+  const {legibleStopPoints}=require('../web/map.js');
+  const points=[{id:'selected',x:0,y:0,radius:12},{id:'opposing',x:0,y:0,radius:9},
+    {id:'next',x:40,y:0,radius:9},{id:'next-opposing',x:41,y:0,radius:9}];
+  assert.deepEqual(legibleStopPoints(points).map(stop=>stop.id),['selected','next']);
+}

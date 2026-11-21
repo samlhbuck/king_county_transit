@@ -91,6 +91,15 @@ function crowdedStopIds(points, clearance=44){
   }
   return hidden;
 }
+function legibleStopPoints(points){
+  const visible=[];
+  for(const point of points){
+    if(visible.every(other=>Math.hypot(point.x-other.x,point.y-other.y)>=point.radius+other.radius)){
+      visible.push(point);
+    }
+  }
+  return visible;
+}
 // Match raster resolution to physical screen pixels instead of stretching tiles.
 function basemapZoom(pixelsPerWorld, pixelRatio=1){
   const density=Math.max(1,Math.min(2,pixelRatio || 1));
@@ -111,7 +120,7 @@ function routeZoomWidth(view, scale, factor, frame){
   const maximum=Math.max(2400,frame[2]*2,frame[3]*2*view[2]/view[3],view[2]);
   return Math.min(maximum,Math.max(scale*120,view[2]*factor));
 }
-if (typeof module !== 'undefined') module.exports = {fittedRouteView, routeZoomWidth, basemapZoom, zoningShimmers, housingZoningMismatch, characterPalette, projectCharacter, zoningCharacter, crowdedStopIds, projectColor, groupProjectsByStop, projectPositions, zoningColor};
+if (typeof module !== 'undefined') module.exports = {fittedRouteView, routeZoomWidth, basemapZoom, zoningShimmers, housingZoningMismatch, characterPalette, projectCharacter, zoningCharacter, crowdedStopIds, legibleStopPoints, projectColor, groupProjectsByStop, projectPositions, zoningColor};
 if (typeof window !== 'undefined') window.RouteMap = class {
   constructor(node, selectStop, selectProject) {
     this.node = node; this.selectStop = selectStop; this.selectProject = selectProject || (p=>this.highlightProject(p)); this.view = [0,0,800,850]; this.projects = [];
@@ -305,6 +314,7 @@ if (typeof window !== 'undefined') window.RouteMap = class {
     if(!this.profileRouteLayer)return;
     this.profileRouteLayer.replaceChildren();
     this.activeProfileId=profile?.id;
+    this.activeBoardingIds=profile?.stops.map(stop=>stop.id);
     if(!profile)return;
     const points=profile.vertices.map(p=>this.xy([p.x,p.y]));
     this.el('path',{d:points.map(([x,y],i)=>`${i&&!profile.vertices[i].breakBefore?'L':'M'}${x},${y}`).join(' '),fill:'none',stroke:'#e7f0ed','stroke-width':7,'vector-effect':'non-scaling-stroke'},this.profileRouteLayer);
@@ -601,16 +611,20 @@ if (typeof window !== 'undefined') window.RouteMap = class {
       || points.find(s=>(s.physicalId||s.id)===this.selected);
     const symbols=points.map(stop=>({...stop,radius:this.options?.topStops?.includes(stop.physicalId||stop.id)
       ? 12 : stop===selected?12:9}));
-    const crowded=this.showAllRouteStops?new Set():crowdedStopIds(symbols);
-    for(const stop of points){
-      if(!crowded.has(stop.id))this.drawStop(stop,unit,stop===selected);
+    const activeStops=new Set(this.activeBoardingIds||[]);
+    const priority=stop=>stop.id===selected?.id?2:activeStops.has(stop.id)?1:0;
+    const visible=this.showAllRouteStops?symbols:legibleStopPoints(symbols.sort((a,b)=>priority(b)-priority(a)));
+    for(const stop of visible){
+      const hitRadius=this.showAllRouteStops?22:visible.reduce((radius,other)=>other===stop?radius:
+        Math.min(radius,Math.hypot(stop.x-other.x,stop.y-other.y)/2),22);
+      this.drawStop(stop,unit,stop.id===selected?.id,hitRadius);
     }
   }
-  drawStop(stop,unit,selected){
+  drawStop(stop,unit,selected,hitRadius){
     const id=stop.physicalId||stop.id;
     const [x,y]=stop.point;
     const node=this.el('g',{class:'stop-marker',transform:`translate(${x},${y}) scale(${unit})`,'aria-pressed':String(selected),'data-stop-id':id,'data-boarding-id':stop.physicalId?stop.id:'',opacity:!this.selected||selected?1:.75},this.stopLayer);
-    this.el('circle',{class:'stop-hit-target',r:22,fill:'transparent','pointer-events':'all'},node);
+    this.el('circle',{class:'stop-hit-target',r:hitRadius,fill:'transparent','pointer-events':'all'},node);
     if(this.options?.topStops?.includes(id))this.el('circle',{class:'top-stop',r:10,fill:'none',stroke:'#b87800','stroke-width':3},node);
     this.el('rect',{class:'stop-symbol',x:selected?-7:-5,y:selected?-7:-5,width:selected?14:10,height:selected?14:10,rx:3,fill:'#173f57',stroke:'white','stroke-width':2},node);
     this.el('title',{},node).textContent=stop.fullName||stop.name;

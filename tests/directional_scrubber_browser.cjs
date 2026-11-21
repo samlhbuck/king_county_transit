@@ -70,8 +70,35 @@ let socket;
           select.dispatchEvent(new Event('change'));
         };
         document.getElementById('fit').click();
+        document.getElementById('profile-lens-mode').click();
+        document.getElementById('profile-lens-mode').click();
         if(!matchMedia('(max-width:650px)').matches)document.querySelector('.map-wrap').scrollIntoView({block:'center'});
       })()`);
+      const streetcar=await evaluate(`(() => {
+        const tick=testLens?.profile.stops.find(s=>/yesler/i.test(s.name));
+        return {tick:tick?.distanceFeet, length:testLens?.profile.lengthFeet};
+      })()`);
+      assert.ok(streetcar.tick>0,'First Hill Yesler stop is present');
+      await evaluate(`scrub(${Math.round(streetcar.tick / streetcar.length * 1000)})`);
+      await waitFor(`!testMap.rideFrame`);
+      const ride=await evaluate(`(() => {
+        const map=testMap, box=map.node.getBoundingClientRect(), matrix=map.node.getScreenCTM();
+        const topStops=new Set(map.options.topStops);
+        const points=map.data.boardingStops.map(stop=>{
+          const [x,y]=map.xy([stop.x,stop.y]);
+          const screen=new DOMPoint(x,y).matrixTransform(matrix);
+          return {id:stop.id,x:screen.x,y:screen.y,radius:topStops.has(stop.physicalId)||stop.id===map.options.boardingId?12:9};
+        });
+        const formerlyHidden=crowdedStopIds(points);
+        const rendered=new Set([...map.stopLayer.querySelectorAll('.stop-marker')].map(node=>node.dataset.boardingId));
+        const inView=points.filter(point=>point.x>=box.left&&point.x<=box.right&&point.y>=box.top&&point.y<=box.bottom);
+        return {eligible:inView.length,previous:inView.filter(point=>!formerlyHidden.has(point.id)).length,
+          rendered:inView.filter(point=>rendered.has(point.id)).length};
+      })()`);
+      console.log(label,'First Hill Yesler RIDE',mode?'all':'default',ride);
+      assert.ok(ride.rendered>=1);
+      if(mode)assert.equal(ride.rendered,ride.eligible);
+      else assert.ok(ride.rendered>=ride.previous);
       await evaluate(`loadRoute('1_100249')`);
       await waitFor(`testMap.data.routeId==='1_100249'&&!document.body.classList.contains('route-loading')`);
       await evaluate(`testMap.fit();window.fitView=[...testMap.view];
@@ -112,7 +139,7 @@ let socket;
       }
       comparison.push(results);
       if(mode===1)continue;
-      assert.ok(results[0].visible<results[2].visible,'closer view reveals boarding markers');
+      assert.ok(results[0].visible<results[2].visible,'closer view reveals additional boarding markers');
       for(const route of ['1_100249','1_100002','1_102745','20_217']){
         await evaluate(`loadRoute('${route}')`);
         await waitFor(`testMap.data.routeId==='${route}'&&!document.body.classList.contains('route-loading')`);
