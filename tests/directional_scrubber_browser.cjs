@@ -110,7 +110,10 @@ let socket;
         .filter(node=>!node.hidden&&node.matches('.frontage-band,#frontage-opposite-stops,.frontage-scrub-target,#frontage-stops'))
         .map(node=>node.id||'scrubber')`),['frontage-left','frontage-opposite-stops','scrubber','frontage-stops','frontage-right']);
       assert.equal(await evaluate(`document.querySelector('.frontage-side-labels')!==null`),false);
-      assert.equal(await evaluate(`document.querySelector('.frontage-toolbar').textContent.trim()`),'ReverseRIDE');
+      assert.equal(await evaluate(`document.querySelector('.frontage-toolbar').textContent.trim()`),'');
+      assert.deepEqual(await evaluate(`[...document.querySelectorAll('.frontage-toolbar button')]
+        .map(button=>[button.getAttribute('aria-label'),!!button.querySelector('svg[aria-hidden="true"]')])`),
+        [['Reverse',true],['RIDE',true]]);
       if(mobile)assert.ok(await evaluate(`['frontage-reverse','frontage-ride'].every(id=>{
         const button=document.getElementById(id),r=button.getBoundingClientRect();
         return r.top>=0&&r.bottom<=innerHeight&&document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)===button;

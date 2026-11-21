@@ -357,9 +357,11 @@ body.route-loading #status::before{content:'';display:block;width:24px;height:24
 .frontage-toolbar{display:flex;justify-content:flex-end;margin-bottom:3px}
 #frontage-stops .frontage-stop{z-index:2}
 .frontage-controls{display:flex;gap:4px}
-.frontage-controls button{min-height:32px;padding:3px 8px;font-size:11px}
-#frontage-ride{background:#152b2a;color:#b0bdbb;border-color:#354d49;font-weight:700}
-#frontage-ride[aria-pressed=true]{color:#acffdb;border-color:#4f9e81;text-shadow:0 0 6px #65ffba;box-shadow:0 0 7px #31846288}
+.frontage-controls button{display:grid;place-items:center;min-width:44px;min-height:32px;padding:3px 8px}
+.frontage-controls svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+#frontage-ride{background:#152b2a;color:#b0bdbb;border-color:#354d49}
+#frontage-ride[aria-pressed=true]{color:#acffdb;border-color:#4f9e81;box-shadow:0 0 7px #31846288}
+#frontage-ride[aria-pressed=true] svg{filter:drop-shadow(0 0 3px #65ffba)}
 .frontage-controls button:focus-visible{outline:2px solid #21644e;outline-offset:2px}
 @media(max-width:650px){.profile-collapsed .frontage-toolbar{display:none}}
 #frontage-length{white-space:nowrap;flex:none}
