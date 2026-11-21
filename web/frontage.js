@@ -162,9 +162,6 @@ if(typeof window!=='undefined')window.FrontageLens=class{
     const plan=document.createElement('a');plan.href='https://www.seattlehousing.org/sites/default/files/Yesler_Terrace_Development_Plan.pdf';plan.target='_blank';plan.rel='noopener noreferrer';plan.textContent='Yesler Terrace: mixed-use plan (2011)';
     if(this.profiles.some(p=>p.samples.some(s=>s.left.includes('MPC-YT') || s.right.includes('MPC-YT'))))links.append(plan);
     this.showPath(handoff);
-    const missingStops=data.zoning?.frontage?.missingStopIds || [];
-    const offSpine=data.zoning?.frontage?.offSpineStopIds || [];
-    document.getElementById('frontage-coverage').textContent=missingStops.length?`${missingStops.length} boarding stops lack nearby cached route geometry.`:offSpine.length?'Scrubbing the main path · other alignments shown on map':'';
   }
   showPath(handoff=null){
     clearTimeout(this.endpointTimer);this.scrubbing=false;this.map.setProfilePin(null);

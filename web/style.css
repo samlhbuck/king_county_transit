@@ -225,7 +225,6 @@ body.route-loading #status::before{content:'';display:block;width:24px;height:24
 .permit-scope input:before{content:'';position:absolute;width:16px;height:16px;border-radius:50%;background:white;top:3px;left:17px}
 .permit-scope input:checked:before{left:3px}
 .permit-scope span{opacity:.6}.permit-scope:has(input:checked)>span:first-child,.permit-scope:has(input:not(:checked))>span:nth-of-type(2){opacity:1;font-weight:700}
-#frontage-coverage:empty{display:none}#frontage-coverage{font-size:11px;margin:0;color:#714918}
 #mobile-close-details{position:sticky;top:0;z-index:3;background:#fffffff2;border-radius:50%}
 .legend-swatch[style*="b8bec1"]{background-image:repeating-linear-gradient(135deg,transparent 0 3px,#87939b88 3px 4px)}
 @media(max-width:650px){
@@ -355,9 +354,9 @@ body.route-loading #status::before{content:'';display:block;width:24px;height:24
 
 #frontage-opposite-stops{position:relative;height:8px}
 .frontage-opposite-stop{position:absolute;top:0;width:3px;height:6px;border:1px solid #526e78;border-radius:1px;transform:translateX(-50%)}
-.frontage-toolbar{display:flex;gap:8px;justify-content:space-between;align-items:center;margin-bottom:3px}
+.frontage-toolbar{display:flex;justify-content:flex-end;margin-bottom:3px}
 #frontage-stops .frontage-stop{z-index:2}
-.frontage-controls{display:flex;gap:4px;flex:none;margin-left:auto}
+.frontage-controls{display:flex;gap:4px}
 .frontage-controls button{min-height:32px;padding:3px 8px;font-size:11px}
 #frontage-ride{background:#152b2a;color:#b0bdbb;border-color:#354d49;font-weight:700}
 #frontage-ride[aria-pressed=true]{color:#acffdb;border-color:#4f9e81;text-shadow:0 0 6px #65ffba;box-shadow:0 0 7px #31846288}
